@@ -43,12 +43,16 @@ $assets = Join-Path $root "assets"
 $apk = Join-Path $root "gcg_offline.apk"
 
 function Find-Adb {
-    foreach ($c in @("adb", "C:\platform-tools\adb.exe", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe")) {
-        $p = (Get-Command $c -ErrorAction SilentlyContinue)
-        if ($p) { return $p.Source }
+    # Prefer a real adb.exe at known locations. We require the .exe explicitly: some
+    # systems have a 0-byte "adb" stub in C:\Windows\System32 that `Get-Command adb`
+    # resolves first, and PowerShell then can't run it ("document in the middle of a
+    # pipeline").
+    foreach ($c in @("C:\platform-tools\adb.exe", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe")) {
         if (Test-Path $c) { return $c }
     }
-    throw "adb not found. Install Android platform-tools and put adb on PATH (or at C:\platform-tools\adb.exe)."
+    $p = Get-Command adb.exe -ErrorAction SilentlyContinue
+    if ($p -and $p.Source -like "*.exe") { return $p.Source }
+    throw "adb.exe not found. Install Android platform-tools (e.g. to C:\platform-tools) or put adb.exe on PATH."
 }
 $adb = Find-Adb
 Write-Host "adb: $adb" -ForegroundColor DarkGray
@@ -82,17 +86,14 @@ if (-not (Test-Path $apk) -or -not (Test-Path (Join-Path $assets "obb"))) {
 if (-not (Test-Path $apk)) { throw "gcg_offline.apk still not found at $apk" }
 
 # ── install APK ───────────────────────────────────────────────────────────────
-$installed = (& $adb -s $Device shell pm path $pkg) 2>$null
-if ($installed) {
-    Write-Host "Updating existing install (install -r, keeps data) ..." -ForegroundColor Yellow
-    & $adb -s $Device install -r "$apk"
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "install -r failed (likely a different signature). Uninstalling the old copy and reinstalling..."
-        & $adb -s $Device uninstall $pkg | Out-Null
-        & $adb -s $Device install "$apk"
-    }
-} else {
-    Write-Host "Installing APK ..." -ForegroundColor Yellow
+# Always use install -r: it installs fresh when absent AND reinstalls over an
+# existing copy (keeping data). Plain `adb install` fails if the package already
+# exists, so we never use it on the first try.
+Write-Host "Installing APK (install -r) ..." -ForegroundColor Yellow
+& $adb -s $Device install -r "$apk"
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "install -r failed (likely a different signature from an existing install). Uninstalling and reinstalling..."
+    & $adb -s $Device uninstall $pkg | Out-Null
     & $adb -s $Device install "$apk"
 }
 if ($LASTEXITCODE -ne 0) { throw "APK install failed." }
@@ -117,7 +118,9 @@ Write-Host "Syncing content bundles (this is the big step; 4.5 GB on first run) 
 if (-not $NoUncensor) {
     Write-Host "Applying uncensor patch (love.u) ..." -ForegroundColor Yellow
     $files = "/data/media/0/Android/data/$pkg/files"
-    & $adb -s $Device shell "su 0 sh -c 'd=$files/l2d/girl111; if [ -f `$d/l2d01.u ]; then cp `$d/l2d01.u `$d/love.u; chown 2000:2000 `$d/love.u; chmod 666 `$d/love.u; echo love.u_created; else echo l2d01_missing; fi'"
+    # Per the GCG Wiki de-censor method, the file only has to EXIST (content is
+    # irrelevant), so an empty file is enough.
+    & $adb -s $Device shell "su 0 sh -c 'd=$files/l2d/girl111; mkdir -p `$d; : > `$d/love.u; chown 2000:2000 `$d/love.u; chmod 666 `$d/love.u; echo love.u_created'"
 }
 
 # ── launch ────────────────────────────────────────────────────────────────────

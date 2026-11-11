@@ -28,7 +28,9 @@ Traced from the client's own `S2CCall.lua` (`SetLive2DEnableLevel`) and `Live2DM
   ```
 
 `love.u` is only ever **checked for existence** (it is never loaded as a model), so the file's
-*contents* don't matter — any file at that path works as the switch.
+*contents* don't matter — **any file, even an empty one, works** as the switch. This matches the
+community method documented on the GCG Wiki (<https://wiki.girl.cafe/de-censor/android/>), which has
+you create an empty `love.u` at exactly this path.
 
 Two things make this build uncensored:
 1. our **offline server sends no censor flag** in the first place (so the enable level stays at the
@@ -37,8 +39,8 @@ Two things make this build uncensored:
 
 ## Automatic (the installer does this)
 
-`INSTALL.bat` / `install.ps1` applies it after syncing the bundles: it copies the already-present
-`l2d/girl111/l2d01.u` to `l2d/girl111/love.u` on the device. Nothing else to do.
+`INSTALL.bat` / `install.ps1` applies it after syncing the bundles: it creates an empty
+`l2d/girl111/love.u` on the device. Nothing else to do.
 
 To install **without** the uncensor (leave it as the global release):
 
@@ -59,12 +61,22 @@ The file goes next to the other content bundles, at:
 ```bash
 D=127.0.0.1:16448 ; P=com.biligameglobal.girlcafegungp
 F=/data/media/0/Android/data/$P/files/l2d/girl111
-adb -s $D shell "su 0 sh -c 'cp $F/l2d01.u $F/love.u; chown 2000:2000 $F/love.u; chmod 666 $F/love.u'"
+adb -s $D shell "su 0 sh -c 'mkdir -p $F; : > $F/love.u; chown 2000:2000 $F/love.u; chmod 666 $F/love.u'"
 ```
 
 **No root:** create the file the same way you delivered the bundles (Shizuku, a file manager, etc. —
 see [04-NO-ROOT.md](04-NO-ROOT.md)). Copy any file (e.g. `l2d01.u`) to `l2d/girl111/love.u` inside
 `Android/data/<pkg>/files/`. It only has to exist.
+
+## How to see that it worked
+
+After restarting the game, the effect shows on the **Live2D interaction**, but only where there's
+something to interact with:
+- Interact with a girl you have at least **Lv.10 Intimacy** with — the touch/flirting is freer.
+- Or open **Shi Wuxia's figure** (Events page or Encyclopedia) and look for the breast-physics tilt.
+
+A brand-new account (still in the tutorial, 0 intimacy) won't show a visible difference yet — the
+switch is in place, but there's no high-intimacy interaction to display.
 
 ## Scope / limits
 
