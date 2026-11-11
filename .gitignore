@@ -1,0 +1,34 @@
+# ─── Copyrighted / game-derived payload — NEVER commit (see CREDITS.md) ───────
+# These belong to Seasun (西山居) / the game's publisher, not to this project.
+# They are delivered as a separate, user-hosted "asset pack" (see docs/INSTALL.md),
+# not redistributed here. The installer downloads them from a URL you set.
+gcg_offline.apk
+*.apk
+*.obb
+assets/Bundles/
+assets/live2d-models/
+assets/obb/
+assets/device_assets/version.data
+assets/device_assets/*.bak
+server/setting/
+apk-build/orig.apk
+apk-build/libil2cpp.so
+apk-build/libmain_orig*.so
+apk-build/lib/
+apk-build/staging/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+bin/
+obj/
+dist/*.zip
+dist/*.7z
+dist/*.tar
+dist/*.part*
+*.unsigned.apk
+*_unsigned.apk
+*_aligned.apk
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.log
+.DS_Store
+Thumbs.db

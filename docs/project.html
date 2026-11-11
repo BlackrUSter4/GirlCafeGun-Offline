@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Girl Cafe Gun — Offline</title>
+<style>
+  :root{
+    --bg:#0f1016; --panel:#171925; --panel2:#1d2030; --ink:#e8eaf2; --muted:#9aa0b5;
+    --line:#2a2e42; --accent:#6ea8fe; --accent2:#c58cff; --good:#5fd6a0; --warn:#ffcf6e; --bad:#ff8a8a;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){
+      --bg:#f6f7fb; --panel:#ffffff; --panel2:#f0f2f8; --ink:#1b1e2b; --muted:#5b6176;
+      --line:#e2e5ef; --accent:#2f6bff; --accent2:#8a3cff; --good:#1a9e6a; --warn:#b5781a; --bad:#c23b3b;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px 80px}
+  header{padding:56px 0 28px;text-align:center}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin-bottom:18px}
+  h1{font-size:clamp(30px,6vw,46px);margin:.1em 0 .15em;letter-spacing:-.02em;
+     background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:18px;max-width:600px;margin:0 auto}
+  h2{font-size:22px;margin:40px 0 14px;letter-spacing:-.01em}
+  h3{font-size:16px;margin:22px 0 6px}
+  p{margin:10px 0}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .grid .card{margin:0}
+  .k{color:var(--muted);font-size:13px}
+  code,kbd{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto}
+  pre code{background:none;border:none;padding:0}
+  ol,ul{padding-left:22px}
+  li{margin:6px 0}
+  .pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-right:6px}
+  .ok{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+  .no{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  .note{border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0}
+  .warnbox{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 9%,transparent)}
+  .foot{color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:48px;padding-top:20px}
+  table{width:100%;border-collapse:collapse;margin:8px 0}
+  td,th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:13px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">Unofficial · Offline · Preservation</span>
+    <h1>Girl Cafe Gun — Offline</h1>
+    <p class="sub">The EN&nbsp;v1.0.9 game with its server embedded inside the APK. Install it, play — no account, no internet, no PC. Everything stays on the device.</p>
+  </header>
+
+  <div class="grid">
+    <div class="card"><div class="k">Version</div><strong>EN global v1.0.9</strong></div>
+    <div class="card"><div class="k">Needs internet</div><strong class="good">No — airplane mode OK</strong></div>
+    <div class="card"><div class="k">Needs root</div><strong>No (emulator Root eases asset push)</strong></div>
+    <div class="card"><div class="k">Server</div><strong>Embedded (.NET, on 127.0.0.1)</strong></div>
+  </div>
+
+  <h2>What this is</h2>
+  <div class="card">
+    <p>A fully offline, single-player build of Girl Cafe Gun for preservation and study. The whole game
+    server — a self-contained .NET runtime plus the open-source <code>sssj-new</code> server plus the
+    game's config tables — is packed <em>inside</em> the APK. A small shim starts that server as a local
+    process when the game launches and points the client at <code>http://127.0.0.1:9080</code>, so the
+    client talks to a server running on the same device. Nothing leaves the phone.</p>
+    <p class="note">This is not affiliated with or endorsed by the game's creators. It ships <strong>no
+    game assets</strong> — you provide your own from a copy of the official app you own. See
+    <a href="#credits">Credits &amp; IP</a>.</p>
+  </div>
+
+  <h2>How it works</h2>
+  <div class="card">
+    <ol>
+      <li><strong>Shim <code>libmain.so</code></strong> replaces Unity's tiny JNI entry: on launch it chains
+        the real one (game boots normally), extracts the bundled server, and forks it as its own process
+        (the .NET runtime can't share Unity's il2cpp process).</li>
+      <li><strong>No root</strong>: the runtime <code>.so</code> ship as <code>lib/arm64-v8a/*.so</code>, so
+        Android installs them in the exec-allowed native-library dir; the server runs from there, not the
+        SELinux-blocked data dir.</li>
+      <li><strong>Offline config patch</strong>: the shim patches il2cpp in memory (via
+        <code>/proc/self/mem</code>, in a re-apply loop) so the client uses the local server and the
+        offline-account path.</li>
+      <li><strong>Airplane mode</strong>: the client's "check your network" gate
+        (<code>IsNetworkOk</code> / <code>IsNetworkReachability</code>) is statically patched to always
+        pass, so New Account works with no network at all.</li>
+    </ol>
+  </div>
+
+  <h2>Install (quick)</h2>
+  <div class="card">
+    <p>Requires an <strong>arm64</strong> Android emulator — <a href="https://www.mumuplayer.com/">MuMu
+    Player 12</a> with Root on is easiest — or an arm64 phone, plus <code>adb</code> on your PC.</p>
+    <ol>
+      <li>Get the <strong>asset pack</strong> (the game files, ~6&nbsp;GB to play) and unzip it so
+        <code>gcg_offline.apk</code> and <code>assets/</code> sit next to <code>INSTALL.bat</code>.</li>
+      <li>Start your emulator / connect your phone.</li>
+      <li>Double-click <strong><code>INSTALL.bat</code></strong>. It installs the APK, the OBB, syncs the
+        content bundles, and launches the game.</li>
+    </ol>
+    <p class="k">First launch: Terms screen → “Agree to all &amp; start”. At the title (server shows
+      <strong>Local</strong>) → New Account → play. Full guide: <code>docs/01-PLAY.md</code>.</p>
+  </div>
+
+  <h2>Build it yourself</h2>
+  <div class="card">
+    <p>Everything original here is MIT. With a stock APK you own, the .NET&nbsp;10 SDK, and the Android
+    NDK/build-tools:</p>
+<pre><code>powershell -File scripts\build-apk.ps1 -OrigApk C:\path\to\base.apk</code></pre>
+    <p class="k">That publishes the server, bakes the data tar, patches il2cpp, compiles the shim/host, and
+    re-signs the APK. Details: <code>docs/03-BUILD-APK.md</code>.</p>
+  </div>
+
+  <h2 id="limits">Limitations &amp; known issues</h2>
+  <div class="card">
+    <table>
+      <tr><th>Area</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>Offline play / airplane mode</td><td><span class="pill ok">Works</span></td>
+        <td>Fresh account, tutorial, story, gacha, shop — all offline. Verified end-to-end.</td></tr>
+      <tr><td>“Connection error” on New Account</td><td><span class="pill ok">Fixed</span></td>
+        <td>The network gate is patched out in this build. (Older builds hit this; this one doesn't.)</td></tr>
+      <tr><td>Missing voice / scenes / art</td><td><span class="pill ok">Fixed</span></td>
+        <td>Earlier builds synced only ~380 bundles; this one ships the full set the game references
+          (~4.5&nbsp;GB) so content isn't missing. Not an install mistake — it was a packaging gap.</td></tr>
+      <tr><td>Chinese title buttons (新账号 / 输入账号)</td><td><span class="pill no">Known</span></td>
+        <td>“New Account” / “Enter Account” text is baked into the EN build's login UI prefab (an upstream
+          localization gap), not an editable table. Fixing it means editing a Unity bundle — a separate
+          task. The intro and most text are English.</td></tr>
+      <tr><td>Background telemetry calls</td><td><span class="pill no">Harmless</span></td>
+        <td>Bundled analytics SDKs (Crasheye, xgsdk, Firebase) still try to phone home and fail silently
+          offline. They don't block play and nothing reaches them. After many offline launches a backlog
+          can slow boot — clear it with <code>adb shell pm clear …</code> (wipes the local account).</td></tr>
+      <tr><td>Non-rooted phones</td><td><span class="pill no">Partial</span></td>
+        <td>The server itself needs no root. Asset delivery without root is the open piece; the installer
+          assumes a rooted emulator for pushing files. See <code>docs/03-BUILD-APK.md</code>.</td></tr>
+      <tr><td>Real online services / multiplayer</td><td><span class="pill no">N/A</span></td>
+        <td>This is single-player offline only by design. It does not and must not touch official servers.</td></tr>
+    </table>
+  </div>
+
+  <h2 id="credits">Credits &amp; intellectual property</h2>
+  <div class="card">
+    <p><strong>The game</strong> — Girl Cafe Gun, all art, audio, text, client and trademarks — belongs to
+    <strong>Seasun&nbsp;Games (西山居 / Kingsoft)</strong> and its publishers (bilibili / Marvelous for the
+    global release). This project is unofficial, non-commercial, and distributes <strong>no game
+    assets</strong>; you bring your own from a copy you own.</p>
+    <p><strong>The server</strong> is the open-source <strong><code>sssj-new</code> by SteveS233</strong>
+    (MIT, © 2025 luoxiadesu), used with small Android-runtime fixes. <strong>This project's</strong> build
+    tooling, scripts and docs are MIT.</p>
+    <p class="note warnbox"><strong>Be responsible.</strong> Personal, offline, preservation use only, with
+    game files you own. Scan anything you download before running it. Full attribution:
+    <code>CREDITS.md</code>.</p>
+  </div>
+
+  <div class="foot">
+    Girl Cafe Gun — Offline · unofficial preservation build · see <code>LICENSE</code> and
+    <code>CREDITS.md</code>. Not affiliated with Seasun / bilibili / Marvelous.
+  </div>
+</div>
+</body>
+</html>

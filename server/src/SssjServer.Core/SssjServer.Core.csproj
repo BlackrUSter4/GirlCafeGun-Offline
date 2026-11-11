@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SssjServer.Protocol\SssjServer.Protocol.csproj" />
+    <!-- 托管实现的 3DES：.NET 的 TripleDES 在 Android/Mono 自包含运行时会去初始化 OpenSSL（EnsureOpenSslInitialized）
+         而安卓没有 OpenSSL ABI → SIGABRT。BouncyCastle 是纯托管、无原生依赖，产出与客户端 Mono 3DES 逐字节一致。 -->
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 允许测试程序集访问 Core 的 internal 成员（如 LuaCallRouter.BuildChunks 用于分片单测） -->
+    <InternalsVisibleTo Include="SssjServer.Tests" />
+  </ItemGroup>
+
+</Project>
