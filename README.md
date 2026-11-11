@@ -1,64 +1,121 @@
 # Girl Cafe Gun — Offline (EN v1.0.9)
 
-A fully offline build of Girl Cafe Gun. The game server is **embedded inside the APK** — install it and
-play, with no account, no internet, and no PC. This package also includes the server source so you can
-run or modify the server yourself.
+An **unofficial, offline, single-player** build of Girl Cafe Gun. The game server is
+**embedded inside the APK** — install it and play with **no account, no internet, and no PC**.
+Everything stays on the device; it works in full **airplane mode**.
 
-> **This build — rebuilt 2026-11-10.** `gcg_offline.apk` embeds the current server source, which carries
-> the Android fixes it needs (managed **BouncyCastle** 3DES for the login gate and `Random.Shared` for
-> key generation, so the runtime doesn't abort on OpenSSL init) plus the settle-validation hardening in
-> `ChapterHandler` (a chapter result is only accepted on the stock path when it carries neither a battle
-> token nor a `bSuccess` flag). The whole server test suite is green. SHA-256 of this APK's signing cert:
-> `a8c4ecec977351dc617365d51644065efbd76aaddeb2f0bf9db9865b7db12e71` (self-signed "SSSJ Offline").
-> Re-signed with the same key as prior builds, so `adb install -r` updates an existing install in place.
+> **This repository ships no game assets.** The game, its art/audio/text, and the client
+> belong to **Seasun (西山居)** and its publishers. You provide the game files yourself (from a
+> copy of the official app you own), delivered as a separate **asset pack** you host. See
+> **[CREDITS.md](CREDITS.md)** for full attribution and IP notice, and
+> **[docs/project.html](docs/project.html)** for an overview + the limitations table.
 
-## What's in here
+For preservation and study only. **Scan anything you download before running it.**
+
+---
+
+## Quick start — just play
+
+1. **Get the asset pack** (the ~6 GB of game files needed to play) and unzip it so that
+   `gcg_offline.apk` and the `assets/` folder sit next to **`INSTALL.bat`**.
+2. Start an **arm64** Android emulator — [MuMu Player 12](https://www.mumuplayer.com/) with
+   **Root** on is easiest — or connect an arm64 phone with USB debugging.
+3. Double-click **`INSTALL.bat`**.
+
+It installs the APK, puts the OBB in place, syncs the content bundles, and launches the game.
+First launch shows a Terms screen → **Agree to all & start**; at the title (server shows
+**Local**) tap **New Account** and play. No internet needed.
+
+Full step-by-step: **[docs/01-PLAY.md](docs/01-PLAY.md)**.
+
+### Using a hosted download link
+
+The asset pack is too large (and too copyrighted) to live in this repo, so **you host it** and
+point the installer at it:
+
+```powershell
+# one time: build the pack, then upload dist\gcg_assets.* to your host (Drive / MEGA / torrent)
+powershell -ExecutionPolicy Bypass -File scripts\make-asset-pack.ps1
+
+# players then run:
+INSTALL.bat -AssetPackUrl https://your-host/gcg_assets.zip
+```
+
+The installer downloads the pack, extracts it, and installs — so a single link is all a player
+needs from you.
+
+---
+
+## What's in this repo
 
 ```
-GCG2-Offline/
-  gcg_offline.apk        ← install this on an Android emulator/device to play offline
-  server/                ← the standalone game server (.NET source) + game data
-    src/                   the 4 projects (App / Core / Game / Protocol)
-    SssjServer.sln
-    setting/               the game config tables the server reads (EN v1.0.9)
-  assets/                ← game assets needed to play (see docs/01-PLAY.md)
-    obb/                   the OBB asset pack (~1.7 GB) → the app's obb folder
-    Bundles/               full asset-bundle repository (5.2 GB)
-    live2d-models/         Live2D models (3.1 GB, reference)
-    device_assets/         version.data + added_bundles.txt (what the game needs beyond the OBB)
-    sync_device_assets.ps1 pushes the needed bundles + version.data to the device
-  apk-build/             ← sources used to build the offline APK (shim, host, repack)
-  docs/
-    01-PLAY.md             install the APK + assets and play
-    02-RUN-SERVER.md       build and run the server yourself (PC / dev)
-    03-BUILD-APK.md        rebuild the embedded offline APK from source
+GirlCafeGun-Offline/
+├─ INSTALL.bat              ← one-click installer (double-click, or pass -AssetPackUrl / -Device)
+├─ scripts/
+│   ├─ install.ps1           the installer logic (APK → OBB → bundle sync → launch)
+│   ├─ build-server.ps1      publish the server for Android (arm64, self-contained .NET)
+│   ├─ build-apk.ps1         bake gcg_offline.apk from source (needs your stock APK)
+│   └─ make-asset-pack.ps1   package the player asset pack you host
+├─ apk-build/              build tooling (shim.c, host.c, repack.py, patch_il2cpp.py, key)
+├─ server/                 the embedded server — sssj-new source (MIT) + setting/ (not committed)
+├─ docs/
+│   ├─ project.html          project overview + limitations (open in a browser)
+│   ├─ 01-PLAY.md            install + play, with troubleshooting
+│   ├─ 02-RUN-SERVER.md      run the server standalone (dev)
+│   └─ 03-BUILD-APK.md       rebuild the offline APK from source
+├─ assets/                 game files — NOT committed (see .gitignore); delivered via the pack
+│   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device
+│   └─ device_assets/           added_bundles.txt (the bundle list) + version.data
+├─ CREDITS.md              attribution + intellectual-property notice (read this)
+└─ LICENSE                 MIT — covers this repo's original work only
 ```
 
-## Pick your path
+What's intentionally **not** here (it's game-owned, delivered in the asset pack): the OBB, the
+asset `Bundles/`, Live2D models, the built `gcg_offline.apk`, `server/setting/`, and any Seasun
+client binaries. The build scripts read those from *your* stock APK / pack at build time.
 
-| I want to… | Read |
-|-----------|------|
-| **Just play offline** | [docs/01-PLAY.md](docs/01-PLAY.md) — install `gcg_offline.apk`, done |
-| **Run the server myself** (dev, testing, modding) | [docs/02-RUN-SERVER.md](docs/02-RUN-SERVER.md) |
-| **Rebuild the offline APK** | [docs/03-BUILD-APK.md](docs/03-BUILD-APK.md) |
+---
 
-## How the offline APK works (in one paragraph)
+## How it works (short version)
 
-The APK ships the whole game server (a self-contained .NET runtime + the server + the config data)
-inside it. A small shim (`libmain.so`) added to the app starts the server as a local process when the
-game launches, points the client at `http://127.0.0.1:9080`, and takes the offline-account path — so
-the client talks to the server running on the same device. Nothing leaves the phone.
+A shim replaces the game's tiny `libmain.so` and, on launch, starts the bundled .NET server as a
+local process, points the client at `http://127.0.0.1:9080`, and patches the client's
+offline/airplane gates in memory. The whole server — runtime + the open-source `sssj-new` server +
+the config tables — ships inside the APK. **No root needed**: the runtime runs from the app's
+native-library dir, not the SELinux-blocked data dir. Details: **[docs/project.html](docs/project.html)**
+and **[docs/03-BUILD-APK.md](docs/03-BUILD-APK.md)**.
 
-## Requirements to **play**
-- An **arm64** Android emulator (MuMu Player 12 recommended) or arm64 phone. **Root is not required** —
-  the embedded server runs out of the app's native-library dir, which Android lets apps execute. A
-  rooted emulator is still the easiest way to push assets (the sync script uses it).
-- **No network required** — the build plays in full **airplane mode**. Everything stays on `127.0.0.1`;
-  nothing leaves the phone. (The client's offline-blocking "check your network" gate is patched out.)
-- `adb` + PowerShell on your PC. The assets you need are in `assets/` (included) — see
-  [docs/01-PLAY.md](docs/01-PLAY.md) for the install + sync steps.
+## Build it yourself
 
-> **Non-rooted phones:** the server itself needs no root (proven end-to-end: fresh account, encrypted
-> gate session, tutorial). The open piece is asset delivery without root — the OBB pushes to the public
-> `Android/obb/` folder fine, and the extra bundles go to the app's external files dir. See the
-> non-rooted section of [docs/03-BUILD-APK.md](docs/03-BUILD-APK.md).
+```powershell
+# server only (native Android arm64 build):
+powershell -ExecutionPolicy Bypass -File scripts\build-server.ps1
+
+# full offline APK (needs your own stock base.apk, the .NET 10 SDK, Android NDK r27 + build-tools):
+powershell -ExecutionPolicy Bypass -File scripts\build-apk.ps1 -OrigApk C:\path\to\base.apk
+```
+
+Re-signing uses the included debug key, so you can update an install in place with `adb install -r`.
+
+## Limitations (read before expecting everything to work)
+
+| Area | Status |
+|------|--------|
+| Offline play / airplane mode | ✅ Works (fresh account, tutorial, story, gacha, shop) |
+| "Connection error" on New Account | ✅ Fixed in this build (network gate patched) |
+| Missing voice / scenes / art | ✅ Fixed — the full bundle set the game references now ships |
+| Chinese title buttons (新账号 / 输入账号) | ⚠️ Known — baked into the EN login-UI prefab; not yet translated |
+| Background telemetry calls | ⚠️ Harmless — fail silently offline; don't block play |
+| Non-rooted phones (asset push) | ⚠️ Partial — server needs no root; rootless asset delivery is open |
+| Official online services / multiplayer | ❌ Out of scope by design |
+
+Full table + explanations: **[docs/project.html](docs/project.html)**.
+
+## Credits
+
+- **Game:** Girl Cafe Gun © **Seasun Games (西山居 / Kingsoft)** and its publishers. Unofficial;
+  not affiliated or endorsed; no assets distributed.
+- **Server:** [`sssj-new`](https://github.com/SteveS233) by **SteveS233** — MIT, © 2025 luoxiadesu.
+- **This repo's** tooling, scripts and docs: MIT (see [LICENSE](LICENSE)).
+
+See **[CREDITS.md](CREDITS.md)** for the complete notice and responsible-use terms.
