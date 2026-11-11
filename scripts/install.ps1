@@ -29,7 +29,10 @@ param(
     # ~10 GB of game files you host yourself (Drive / MEGA / torrent). Leave blank
     # to use assets already present next to this repo.
     [string]$AssetPackUrl = "",
-    [switch]$SkipLaunch
+    [switch]$SkipLaunch,
+    # Skip the love.u uncensor patch (restores the Live2D touch/flirting interactions
+    # the global build suppresses). On by default; pass -NoUncensor to leave it censored.
+    [switch]$NoUncensor
 )
 
 $ErrorActionPreference = "Stop"
@@ -104,6 +107,18 @@ Write-Host "Installing OBB ($([math]::Round($obb.Length/1GB,2)) GB) ..." -Foregr
 # ── content bundles ───────────────────────────────────────────────────────────
 Write-Host "Syncing content bundles (this is the big step; 4.5 GB on first run) ..." -ForegroundColor Yellow
 & powershell -ExecutionPolicy Bypass -File (Join-Path $assets "sync_device_assets.ps1") -Device $Device
+
+# ── uncensor patch (love.u) ─────────────────────────────────────────────────────
+# The EN build is censored by the OFFICIAL server sending a reduced Live2D enable
+# level / harmonize (HX) flag; the client bypasses it when l2d/girl111/love.u exists
+# (S2CCall.lua: SetLive2DEnableLevel). The file only needs to exist, so we make it a
+# copy of the already-synced girl111/l2d01.u. Our offline server sends no censor flag,
+# so with this in place the touch/flirting interactions run at full level.
+if (-not $NoUncensor) {
+    Write-Host "Applying uncensor patch (love.u) ..." -ForegroundColor Yellow
+    $files = "/data/media/0/Android/data/$pkg/files"
+    & $adb -s $Device shell "su 0 sh -c 'd=$files/l2d/girl111; if [ -f `$d/l2d01.u ]; then cp `$d/l2d01.u `$d/love.u; chown 2000:2000 `$d/love.u; chmod 666 `$d/love.u; echo love.u_created; else echo l2d01_missing; fi'"
+}
 
 # ── launch ────────────────────────────────────────────────────────────────────
 if (-not $SkipLaunch) {

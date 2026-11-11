@@ -128,6 +128,10 @@
       <tr><td>Missing voice / scenes / art</td><td><span class="pill ok">Fixed</span></td>
         <td>Earlier builds synced only ~380 bundles; this one ships the full set the game references
           (~4.5&nbsp;GB) so content isn't missing. Not an install mistake — it was a packaging gap.</td></tr>
+      <tr><td>Censored Live2D touch / flirting interactions</td><td><span class="pill ok">Restored</span></td>
+        <td>The global build gates these via a server flag; the installer applies the <code>love.u</code>
+          bypass by default so they run at full level (<code>-NoUncensor</code> to opt out). The animations
+          were never removed from the model — only gated. The base art is identical across regions.</td></tr>
       <tr><td>Chinese title buttons (新账号 / 输入账号)</td><td><span class="pill no">Known</span></td>
         <td>“New Account” / “Enter Account” text is baked into the EN build's login UI prefab (an upstream
           localization gap), not an editable table. Fixing it means editing a Unity bundle — a separate
