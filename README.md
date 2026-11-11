@@ -62,7 +62,8 @@ GirlCafeGun-Offline/
 │   ├─ project.html          project overview + limitations (open in a browser)
 │   ├─ 01-PLAY.md            install + play, with troubleshooting
 │   ├─ 02-RUN-SERVER.md      run the server standalone (dev)
-│   └─ 03-BUILD-APK.md       rebuild the offline APK from source
+│   ├─ 03-BUILD-APK.md       rebuild the offline APK from source
+│   └─ 04-NO-ROOT.md         install the bundles/assets without root (Shizuku etc.)
 ├─ assets/                 game files — NOT committed (see .gitignore); delivered via the pack
 │   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device
 │   └─ device_assets/           added_bundles.txt (the bundle list) + version.data
@@ -106,7 +107,7 @@ Re-signing uses the included debug key, so you can update an install in place wi
 | Missing voice / scenes / art | ✅ Fixed — the full bundle set the game references now ships |
 | Chinese title buttons (新账号 / 输入账号) | ⚠️ Known — baked into the EN login-UI prefab; not yet translated |
 | Background telemetry calls | ⚠️ Harmless — fail silently offline; don't block play |
-| Non-rooted phones (asset push) | ⚠️ Partial — server needs no root; rootless asset delivery is open |
+| Non-rooted phones (asset push) | ⚠️ Works via Shizuku / file manager — see [docs/04-NO-ROOT.md](docs/04-NO-ROOT.md) |
 | Official online services / multiplayer | ❌ Out of scope by design |
 
 Full table + explanations: **[docs/project.html](docs/project.html)**.

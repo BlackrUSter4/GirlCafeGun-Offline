@@ -60,7 +60,12 @@ try {
     Copy-Item (Join-Path $pub "*.so") $staging;  Copy-Item (Join-Path $pub "*.dll") $staging
     Copy-Item (Join-Path $pub "*.json") $staging; Copy-Item (Join-Path $pub "*.a") $staging
     Copy-Item $setting (Join-Path $staging "setting") -Recurse
-    & tar.exe -C $staging -czf (Join-Path $lib "libsssjdata.so") .
+    # Build the .tar.gz with Python (Windows' bundled tar.exe/bsdtar can silently
+    # truncate the gzip stream on large archives; Python's tarfile is reliable).
+    $dataTar = ((Join-Path $lib "libsssjdata.so") -replace '\\','/')
+    $stg = ($staging -replace '\\','/')
+    python -c "import tarfile; tf=tarfile.open(r'$dataTar','w:gz'); tf.add(r'$stg', arcname='.'); tf.close()"
+    if ($LASTEXITCODE -ne 0) { throw "data tar build failed" }
     # 2. runtime .so as lib-dir entries
     foreach ($so in @("libhostfxr","libhostpolicy","libcoreclr","libSystem.Native","libSystem.Globalization.Native","libSystem.IO.Compression.Native","libSystem.Security.Cryptography.Native.OpenSsl")) {
         Copy-Item (Join-Path $pub "$so.so") $lib

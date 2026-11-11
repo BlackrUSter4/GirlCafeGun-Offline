@@ -79,7 +79,32 @@ try {
         if ($SplitGB -gt 0) { Write-Warning "7-Zip not found; cannot split. Producing a single zip. Install 7-Zip to split for 2GB-limited hosts." }
         $out = Join-Path $dist "gcg_assets.zip"
         Remove-Item $out -Force -ErrorAction SilentlyContinue
-        & tar.exe -a -c -f $out @items          # bsdtar writes a zip (zip64 for >4GB)
+        # Pack with Python zipfile (ZIP_STORED + zip64) — reliable for >4 GB. Windows'
+        # bundled tar.exe/bsdtar can silently truncate large archives, so we avoid it.
+        $listFile = Join-Path $env:TEMP "gcg_pack_items.txt"
+        [IO.File]::WriteAllLines($listFile, [string[]]$items, (New-Object Text.UTF8Encoding $false))
+        $pyFile = Join-Path $env:TEMP "gcg_pack.py"
+        $py = @'
+import os, sys, zipfile
+root, out, listfile = sys.argv[1], sys.argv[2], sys.argv[3]
+items = [l.strip() for l in open(listfile, encoding="utf-8") if l.strip()]
+z = zipfile.ZipFile(out, "w", zipfile.ZIP_STORED, allowZip64=True)
+for it in items:
+    p = os.path.join(root, it)
+    if os.path.isdir(p):
+        for dp, _, fns in os.walk(p):
+            for fn in fns:
+                fp = os.path.join(dp, fn)
+                z.write(fp, os.path.relpath(fp, root).replace(os.sep, "/"))
+    else:
+        z.write(p, it.replace("\\", "/"))
+z.close()
+print("wrote", out, os.path.getsize(out), "bytes")
+'@
+        [IO.File]::WriteAllText($pyFile, $py, (New-Object Text.UTF8Encoding $false))
+        python $pyFile $root $out $listFile
+        if ($LASTEXITCODE -ne 0) { throw "python pack failed" }
+        Remove-Item $listFile, $pyFile -Force -ErrorAction SilentlyContinue
         Write-Host "`nPack: $out" -ForegroundColor Green
     }
 } finally { Pop-Location }
