@@ -132,6 +132,13 @@ public sealed class IbShopFeature : IGameFeature
 
     private GameFeatureContext _ctx = null!;
     private IbShopTable _table = IbShopTable.Empty;
+    // gcg2#4: PurchaseIB.txt rows (the "Earth Coin Pool" packs, request Type=2): id -> pack definition.
+    private readonly Dictionary<int, IbItemPack> _packs = new();
+
+    private sealed record IbItemPack(int Id, int[]? Main, int[]? First, int[]? Normal, int MaxBuy);
+
+    // Reward tuples (G,D,P,L) of the IB diamond items: in the stock game the payment callback adds paid diamonds directly.
+    private static readonly (int G, int D, int P, int L)[] PayDiamondTuples = { (14, 1, 1, 1), (14, 1, 2, 1), (14, 1, 3, 1) };
 
     public string Name => "内购商店购买（LuaCall 10000：特殊补给 / 地球币矿池 / 十面妆造）";
 
@@ -139,6 +146,7 @@ public sealed class IbShopFeature : IGameFeature
     {
         _ctx = ctx;
         _table = IbShopTable.Load(Path.GetFullPath(ctx.Options.SettingDirectory));
+        LoadPacks(Path.Combine(Path.GetFullPath(ctx.Options.SettingDirectory), "PurchaseIB.txt"));
         ctx.MapLuaCall(CmdDoRecharge, OnDoRecharge);
     }
 
@@ -152,14 +160,11 @@ public sealed class IbShopFeature : IGameFeature
         int type = ReadInt(obj?["Type"], -1);
         int id = ReadInt(obj?["Id"], -1);
 
-        // 充值道具（Type=2）是**真钱**通道：PurchaseIB.txt 的商品一律经 XGCharge
-        // （IBLogic.lua:897..929 的 Type==2 分支无条件读 TradeNo 并调 XGCharge）
-        // ⇒ 本服不支持，明确拒绝。
+        // Earth Coin Pool packs (Type=2) are real-money in the stock game (payment SDK). This offline build has none,
+        // so the server grants the pack itself and tells the patched client (Free=1) to skip the SDK.
         if (type == TypeIbItem)
         {
-            Log.Warn($"[session {session.Id}] DoRecharge Type=2(充值道具 id={id}) 属真钱通道，" +
-                     $"本服不支持 → Error={ErrRealMoneyUnsupported}");
-            Reply(session, type, id, ErrRealMoneyUnsupported);
+            BuyPack(session, player, id);
             return Task.CompletedTask;
         }
 
@@ -182,14 +187,8 @@ public sealed class IbShopFeature : IGameFeature
             return Task.CompletedTask;
         }
 
-        // ---- 真钱商品：明确拒绝 ----
-        if (goods.IsRealMoney)
-        {
-            Log.Warn($"[session {session.Id}] DoRecharge 礼包 id={id} 是真钱商品" +
-                     $"（Currency=-1，需 XGSDK）→ Error={ErrRealMoneyUnsupported}");
-            Reply(session, type, id, ErrRealMoneyUnsupported);
-            return Task.CompletedTask;
-        }
+        // Real-money gift (Currency=-1): granted for free in this offline build; the reply carries Free=1 (patched client).
+        bool free = goods.IsRealMoney;
 
         long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -224,7 +223,7 @@ public sealed class IbShopFeature : IGameFeature
         }
 
         // ---- 扣费（★ 客户端不查货币，只有服务端把关）----
-        int price = goods.PriceAt(now);
+        int price = free ? 0 : goods.PriceAt(now);
         int moneyId = ResolveMoneyId(goods.Currency);
         int have = player.GetMoney(moneyId);
         if (price > 0 && have < price)
@@ -268,7 +267,7 @@ public sealed class IbShopFeature : IGameFeature
             new KeyValuePair<uint, int>(Player.ComposeTaskId(TaskGroup, taskId), bought + 1),
         });
 
-        Reply(session, type, id, ErrOk, BuildItemList(granted));
+        Reply(session, type, id, ErrOk, BuildItemList(granted), free);
 
         Log.Info($"[session {session.Id}] 内购购买成功 id={id}（label={goods.LabelIdx}" +
                  $"{(goods.LabelIdx == IbShopTable.LabelDress ? " 十面妆造" : "")}）" +
@@ -320,14 +319,99 @@ public sealed class IbShopFeature : IGameFeature
     /// 回包。★ <c>Error</c> 是**大写 + 数值比较**（<c>IBLogic.lua:798</c>）——
     /// 成功必须显式给 0，且 <c>tbItem</c> 一律给（空数组也行）。
     /// </summary>
-    private void Reply(ClientSession session, int type, int id, int error, JsonArray? items = null)
-        => _ctx.LuaCalls.CallClient(session, CmdDoRecharge, new JsonObject
+    private void Reply(ClientSession session, int type, int id, int error, JsonArray? items = null, bool free = false)
+    {
+        var reply = new JsonObject
         {
             ["Error"] = error,
             ["Type"] = type,
             ["Id"] = id,
             ["tbItem"] = items ?? new JsonArray(),
+        };
+        if (free)
+            reply["Free"] = 1;   // read by the patched IBLogic:ResponseTradeNo (tools/patch_lua_free_purchase.py)
+        _ctx.LuaCalls.CallClient(session, CmdDoRecharge, reply);
+    }
+
+    private void LoadPacks(string path)
+    {
+        if (SettingTable.Load(path) is not { } raw)
+        {
+            Log.Warn("[setting] PurchaseIB.txt missing: Earth Coin Pool purchases are refused (20074)");
+            return;
+        }
+        foreach (var row in raw.Rows)
+        {
+            int id = raw.Int(row, "Id", -1);
+            if (id <= 0) continue;
+            _packs[id] = new IbItemPack(id,
+                IbShopTable.ParseCommaItem(raw.Str(row, "ServerItem1")),
+                IbShopTable.ParseCommaItem(raw.Str(row, "FirstCharge")),
+                IbShopTable.ParseCommaItem(raw.Str(row, "NormalCharge")),
+                raw.Int(row, "MaxBuy"));
+        }
+        Log.Info($"[ibshop] {_packs.Count} Earth Coin Pool packs loaded from PurchaseIB.txt");
+    }
+
+    /// <summary>One tuple (G,D,P,L,N). N defaults to 1 when the row has only four numbers.</summary>
+    private static int[] WithCount(int[] t) => t.Length >= 5 ? t : new[] { t[0], t[1], t[2], t[3], 1 };
+
+    /// <summary>
+    /// Grants an Earth Coin Pool pack (request Type=2, ids from PurchaseIB.txt): the main item (paid diamonds), plus the
+    /// FirstCharge bonus on the first purchase or the NormalCharge bonus on later ones. Records the purchase in task (42,id),
+    /// which the client reads for the "Only Once / Double" labels. No payment SDK is involved.
+    /// </summary>
+    private void BuyPack(ClientSession session, Player player, int id)
+    {
+        if (!_packs.TryGetValue(id, out var pack) || pack.Main is null)
+        {
+            Log.Warn($"[session {session.Id}] DoRecharge Type=2 id={id} is not in PurchaseIB.txt -> Error={ErrNoGoods}");
+            Reply(session, TypeIbItem, id, ErrNoGoods);
+            return;
+        }
+        int bought = player.GetTask(TaskGroup, id);
+        if (pack.MaxBuy > 0 && bought >= pack.MaxBuy)
+        {
+            Log.Warn($"[session {session.Id}] DoRecharge Type=2 id={id} over the limit ({bought}/{pack.MaxBuy}) -> Error={ErrLimitReached}");
+            Reply(session, TypeIbItem, id, ErrLimitReached);
+            return;
+        }
+
+        var tuples = new List<int[]> { WithCount(pack.Main) };
+        var bonus = bought == 0 ? pack.First : pack.Normal;
+        if (bonus is not null) tuples.Add(WithCount(bonus));
+
+        var granted = new RewardGrantResult();
+        var shown = new JsonArray();
+        var changedMoney = new List<int>();
+        foreach (var t in tuples)
+        {
+            if (Array.Exists(PayDiamondTuples, k => k.G == t[0] && k.D == t[1] && k.P == t[2] && k.L == t[3]))
+            {
+                player.AddMoney(MoneyType.PayDiamond, t[4]);
+                if (!changedMoney.Contains(MoneyType.PayDiamond)) changedMoney.Add(MoneyType.PayDiamond);
+                shown.Add(new JsonArray { t[0], t[1], t[2], t[3], t[4] });
+            }
+            else
+            {
+                _ctx.Rewards.Grant(player, new[] { t }, RewardSource.Extra, granted);
+            }
+        }
+        player.SetTask(TaskGroup, id, bought + 1);
+        _ctx.Store.Save(player);
+
+        foreach (int money in changedMoney) GameNotify.PushMoney(session, player, money);
+        GameNotify.PushRewards(session, player, granted);
+        GameNotify.PushTaskValues(session, new[]
+        {
+            new KeyValuePair<uint, int>(Player.ComposeTaskId(TaskGroup, id), bought + 1),
         });
+        foreach (var item in BuildItemList(granted)) shown.Add(item?.DeepClone());
+
+        Reply(session, TypeIbItem, id, ErrOk, shown, free: true);
+        Log.Info($"[session {session.Id}] Earth Coin Pool pack id={id} granted for free (offline build): " +
+                 $"{string.Join(" + ", tuples.Select(t => $"({t[0]},{t[1]},{t[2]},{t[3]})x{t[4]}"))}; purchase count {bought + 1}");
+    }
 
     private static int ReadInt(JsonNode? node, int fallback = 0)
         => node is null ? fallback : int.TryParse(node.ToString(), out var v) ? v : fallback;

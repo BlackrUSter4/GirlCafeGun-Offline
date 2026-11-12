@@ -61,7 +61,7 @@ public sealed class ExchangeMoneyFeature : IGameFeature
     private Task OnExchange(ClientSession session, string function, JsonNode? param)
     {
         if (session.Tag is not Player player) return Task.CompletedTask;
-        int type = EventKit.Number(param, "nType"), count = Math.Max(1, EventKit.Number(param, "nCount"));
+        int type = EventKit.Number(param, "nType"), count = Math.Clamp(EventKit.Number(param, "nCount"), 1, 99);
         lock (player)
         {
             var changes = new List<KeyValuePair<uint, int>>();
