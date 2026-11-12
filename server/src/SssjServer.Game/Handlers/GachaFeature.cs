@@ -267,6 +267,11 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
         }
 
         // ---- 扣费（GachaCommon:JudgeCurrency 的顺序：道具 → 免费钻 → 免费钻+付费钻）----
+        // gcg2#12: everything from here on is all-or-nothing. If anything throws after the payment, the player is put
+        // back to this snapshot, so currency is never lost without a draw.
+        string backup = PlayerStore.Snapshot(player);
+        try
+        {
         RefreshFreeState(session, player, now);
         var paymentBefore = new GachaPaymentSnapshot(player);
         var spend = TrySpend(player, pool, ten, now);
@@ -329,6 +334,15 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
                  $"；保底计数 (15,{TaskProtectBegin + poolId})=" +
                  $"{player.GetTask(TaskGroup, TaskProtectBegin + poolId)}");
         return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            PlayerStore.Restore(player, backup);
+            _ctx.Store.Save(player);
+            Log.Error($"[session {session.Id}] Lottery nId={poolId} failed after payment, player state restored: {ex}");
+            Reply(session, FnLottery, new JsonObject { ["err"] = ErrNotExists });
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary>
@@ -589,12 +603,21 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
             uint g = (uint)cost[0], d = (uint)cost[1], p = (uint)cost[2], l = (uint)cost[3];
             int need = cost.Length >= 5 && cost[4] > 0 ? cost[4] : 1;
 
-            var stack = player.Items.FirstOrDefault(i => i.Genre == g && i.Detail == d
-                                                      && i.Particular == p && i.Level == l);
-            if (stack is not null && stack.Count >= need)
+            // gcg2#13: TicketCount sums every stack of the ticket, so the spend must too (it used the first stack only).
+            var stacks = player.Items.Where(i => i.Genre == g && i.Detail == d
+                                              && i.Particular == p && i.Level == l && i.Count > 0).ToList();
+            long haveTickets = stacks.Sum(i => (long)i.Count);
+            if (haveTickets >= need)
             {
-                stack.Count -= (uint)need;
-                r.ChangedItems.Add(stack);
+                long left = need;
+                foreach (var stack in stacks)
+                {
+                    uint take = (uint)Math.Min(left, stack.Count);
+                    stack.Count -= take;
+                    left -= take;
+                    r.ChangedItems.Add(stack);
+                    if (left == 0) break;
+                }
                 r.Note($"{_ctx.ItemTemplates.NameOf(g, d, p, l)}×{need}");
                 r.Ok = true;
                 return r;
@@ -604,7 +627,7 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
             if (pool.CashType == 1)
             {
                 r.Reason = $"道具 {_ctx.ItemTemplates.NameOf(g, d, p, l)} 不足（有 " +
-                           $"{stack?.Count ?? 0}，需 {need}）且该池 CashType=1 只接受道具";
+                           $"{haveTickets}，需 {need}）且该池 CashType=1 只接受道具";
                 return r;
             }
 

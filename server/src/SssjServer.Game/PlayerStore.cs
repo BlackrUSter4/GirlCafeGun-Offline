@@ -115,6 +115,28 @@ public sealed class PlayerStore
         return string.IsNullOrWhiteSpace(name) ? "_" : name;
     }
 
+    /// <summary>gcg2#12: the persisted state of a player as one JSON string, for an all-or-nothing operation.</summary>
+    internal static string Snapshot(Player player)
+        => JsonSerializer.Serialize(PlayerDto.FromPlayer(player), JsonOptions);
+
+    /// <summary>gcg2#12: puts a <see cref="Snapshot"/> back into the live player object (same reference stays valid).</summary>
+    internal static void Restore(Player target, string snapshot)
+    {
+        var src = JsonSerializer.Deserialize<PlayerDto>(snapshot, JsonOptions)!.ToPlayer();
+        target.Level = src.Level;
+        target.Exp = src.Exp;
+        target.Fightpower = src.Fightpower;
+        target.VigourTime = src.VigourTime;
+        target.NextGuid = src.NextGuid;
+        target.Money.Clear(); foreach (var (k, v) in src.Money) target.Money[k] = v;
+        target.Tasks.Clear(); foreach (var (k, v) in src.Tasks) target.Tasks[k] = v;
+        target.Levels.Clear(); foreach (var (k, v) in src.Levels) target.Levels[k] = v;
+        target.Extra.Clear(); foreach (var (k, v) in src.Extra) target.Extra[k] = v;
+        target.Girls.Clear(); target.Girls.AddRange(src.Girls);
+        target.Items.Clear(); target.Items.AddRange(src.Items);
+        target.Formations.Clear(); target.Formations.AddRange(src.Formations);
+    }
+
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,

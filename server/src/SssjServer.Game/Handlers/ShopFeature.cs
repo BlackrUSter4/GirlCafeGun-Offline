@@ -386,6 +386,13 @@ public sealed class ShopFeature : IGameFeature
             return Task.CompletedTask;
         }
 
+        // gcg2#16: every entry can build a shelf and save; a client never sends more than a few.
+        if (requests.Count > 100)
+        {
+            Log.Warn($"[session {session.Id}] Shop_ReqBuyFurList: {requests.Count} entries, more than 100, ignored");
+            return Task.CompletedTask;
+        }
+
         var reply = new JsonArray();
         var merged = new BuyOutcome();
         int ok = 0;
