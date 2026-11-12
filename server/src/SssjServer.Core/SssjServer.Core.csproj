@@ -18,6 +18,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Local copies of the web pages the client used to load online (Notice, server-error page).
+         Served under /web/ by BootstrapHttpServer through WebAssets. See docs/07-ONLINE-RESOURCES.md. -->
+    <EmbeddedResource Include="Web\**\*" LogicalName="web/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 允许测试程序集访问 Core 的 internal 成员（如 LuaCallRouter.BuildChunks 用于分片单测） -->
     <InternalsVisibleTo Include="SssjServer.Tests" />
   </ItemGroup>

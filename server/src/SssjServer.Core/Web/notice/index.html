@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Notice</title>
+<!--
+  Local replacement for the in-game Notice page.
+  Original: https://game-intl.biligame.net/girlcafegun/notice/h5/ (Bilibili CMS page, gone, never archived).
+  Layout follows the archived sibling pages of the same template (tabs + list + detail):
+    https://www.komoejoy.com/GirlCafeGun/notice/maintenance/h5/  (Wayback 2022-05-19)
+    https://game.bilibili.com/sssj/notice2/h5/                    (Wayback 2026-09-13)
+  Data: GET /notice.txt of this server (BootstrapHttpServer.Notice). No request leaves the device.
+  Written for old Android WebViews: ES5 only, XMLHttpRequest, no external files.
+-->
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{background:#f3f5f8;color:#2b3038;font:15px/1.6 "Roboto","Noto Sans","Helvetica Neue",Arial,sans-serif;
+       display:-webkit-flex;display:flex}
+  #tabs{-webkit-flex:0 0 132px;flex:0 0 132px;background:#e6eaf0;padding:10px 0;overflow-y:auto}
+  .tab{display:block;width:100%;border:0;background:none;text-align:left;padding:13px 14px 13px 18px;
+       font:inherit;font-size:15px;color:#5b6574;border-left:4px solid transparent}
+  .tab.on{background:#f3f5f8;color:#0b7bb0;font-weight:bold;border-left-color:#0b7bb0}
+  #main{-webkit-flex:1;flex:1;min-width:0;overflow-y:auto;padding:10px 16px 16px}
+  .row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;background:#fff;
+       border-radius:4px;margin:0 0 8px;padding:11px 14px;box-shadow:0 1px 2px rgba(30,40,60,.10)}
+  .tag{-webkit-flex:0 0 auto;flex:0 0 auto;min-width:58px;text-align:center;font-size:12px;font-weight:bold;
+       letter-spacing:.4px;color:#fff;border-radius:3px;padding:2px 6px;margin-right:12px;text-transform:uppercase}
+  .tag.notices{background:#0b7bb0}.tag.activity{background:#b8501a}.tag.news{background:#586880}
+  .ttl{-webkit-flex:1;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .date{-webkit-flex:0 0 auto;flex:0 0 auto;color:#5f6b7a;font-size:12px;margin-left:12px}
+  .empty{color:#5f6b7a;text-align:center;padding:48px 0}
+  #detail{display:none}
+  #back{border:0;background:none;color:#0b7bb0;font:inherit;padding:6px 0 10px}
+  #dbox{background:#fff;border-radius:4px;padding:16px 18px;box-shadow:0 1px 2px rgba(30,40,60,.10)}
+  #dttl{font-size:18px;font-weight:bold;margin:0 0 2px}
+  #ddate{color:#5f6b7a;font-size:12px;margin:0 0 12px}
+  #dbody{white-space:pre-wrap;word-wrap:break-word}
+  #foot{color:#5f6b7a;font-size:12px;text-align:center;padding:14px 0 0}
+</style>
+</head>
+<body>
+<div id="tabs">
+  <button class="tab on" data-k="all">All</button>
+  <button class="tab" data-k="notices">Notices</button>
+  <button class="tab" data-k="activity">Events</button>
+  <button class="tab" data-k="news">News</button>
+</div>
+<div id="main">
+  <div id="list"><div class="empty">Loading…</div></div>
+  <div id="detail">
+    <button id="back">&lsaquo; Back</button>
+    <div id="dbox"><p id="dttl"></p><p id="ddate"></p><div id="dbody"></div></div>
+  </div>
+  <div id="foot">Offline build &middot; this page comes from the game server on this device</div>
+</div>
+<script>
+(function () {
+  var KINDS = ['notices', 'activity', 'news'];
+  var LABEL = { notices: 'Notice', activity: 'Event', news: 'News' };
+  var items = [], cur = 'all';
+  var list = document.getElementById('list'), detail = document.getElementById('detail');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  // The game writes notices with Unity rich text. Keep bold/italic/color, drop the rest.
+  function rich(s) {
+    s = esc(s).replace(/\\n/g, '\n');
+    s = s.replace(/&lt;(\/?)(b|i)&gt;/gi, '<$1$2>');
+    s = s.replace(/&lt;color=["']?(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)["']?&gt;/g, '<span style="color:$1">');
+    s = s.replace(/&lt;\/color&gt;/gi, '</span>');
+    return s.replace(/&lt;\/?(size|material|quad|a)[^&]*&gt;/gi, '');
+  }
+  function plain(s) { return String(s == null ? '' : s).replace(/<[^>]*>/g, ''); }
+
+  function render() {
+    var html = '', n = 0;
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (cur !== 'all' && it.kind !== cur) continue;
+      n++;
+      html += '<div class="row" data-i="' + i + '"><span class="tag ' + it.kind + '">' + LABEL[it.kind] +
+              '</span><span class="ttl">' + esc(plain(it.title)) + '</span><span class="date">' +
+              esc(it.date || '') + '</span></div>';
+    }
+    list.innerHTML = n ? html : '<div class="empty">No notices.</div>';
+  }
+  function show(i) {
+    var it = items[i];
+    document.getElementById('dttl').innerHTML = rich(it.title);
+    document.getElementById('ddate').innerHTML = esc(it.date || '');
+    document.getElementById('dbody').innerHTML = rich(it.content);
+    list.style.display = 'none'; detail.style.display = 'block';
+    document.getElementById('main').scrollTop = 0;
+  }
+  function back() { detail.style.display = 'none'; list.style.display = 'block'; }
+
+  list.onclick = function (e) {
+    var t = e.target;
+    while (t && t !== list && !t.getAttribute('data-i')) t = t.parentNode;
+    if (t && t !== list) show(+t.getAttribute('data-i'));
+  };
+  document.getElementById('back').onclick = back;
+  document.getElementById('tabs').onclick = function (e) {
+    var k = e.target.getAttribute('data-k');
+    if (!k) return;
+    cur = k; back();
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].className = 'tab' + (tabs[i] === e.target ? ' on' : '');
+    render();
+  };
+
+  function load(data) {
+    var now = new Date().getTime();
+    items = [];
+    for (var k = 0; k < KINDS.length; k++) {
+      var arr = data[KINDS[k]] || [];
+      for (var i = 0; i < arr.length; i++) {
+        var it = arr[i];
+        var a = Date.parse(it.startTime), b = Date.parse(it.endTime);
+        if ((a && now < a) || (b && now > b)) continue;
+        items.push({ kind: KINDS[k], title: it.title, content: it.content, date: it.date, pri: +it.priority || 0 });
+      }
+    }
+    items.sort(function (x, y) { return y.pri - x.pri; });
+    render();
+    if (items.length === 1) show(0);
+  }
+  function fail() { list.innerHTML = '<div class="empty">The notice list did not load. Close this window and open it again.</div>'; }
+
+  var x = new XMLHttpRequest();
+  x.open('GET', '/notice.txt?rnd=' + new Date().getTime(), true);
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    if (x.status !== 200) return fail();
+    try { load(JSON.parse(x.responseText)); } catch (e) { fail(); }
+  };
+  x.onerror = fail;
+  x.send();
+})();
+</script>
+</body>
+</html>

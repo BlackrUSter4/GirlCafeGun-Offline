@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Connection problem</title>
+<!--
+  Local replacement for the EN "maintenance" page that envir.json uses for help, word, errUrlServerlist,
+  errUrlGate, errUrlServer and chargeCallback:
+    https://game-intl.biligame.net/girlcafegun/notice/maintenance/h5/   (gone, never archived)
+  The same text is embedded in Lua (OfflineErrorHtml in Lib.lua, tools/patch_lua_offline_web.py) for
+  UI_ServerError, because that window opens exactly when this server does not answer.
+-->
+<style>
+  html,body{height:100%;margin:0}
+  body{background:#f3f5f8;color:#2b3038;font:15px/1.7 "Roboto","Noto Sans","Helvetica Neue",Arial,sans-serif;
+       display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+       -webkit-justify-content:center;justify-content:center}
+  .box{max-width:560px;margin:16px;background:#fff;border-radius:4px;padding:20px 24px;
+       box-shadow:0 1px 2px rgba(30,40,60,.10)}
+  h1{font-size:19px;margin:0 0 10px;color:#0b7bb0}
+  ol{margin:8px 0 0;padding-left:22px}
+  .tip{color:#5f6b7a;font-size:12px;margin:14px 0 0}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>The game server did not answer</h1>
+  <p>This is the offline build. The game server runs inside the app on this device. It needs no internet.</p>
+  <ol>
+    <li>Close the game fully (remove it from the recent apps list).</li>
+    <li>Open the game again and wait at the title screen for a few seconds.</li>
+    <li>If the error stays, restart the device.</li>
+  </ol>
+  <p class="tip">Your save data stays on the device. This error does not delete it.</p>
+</div>
+</body>
+</html>

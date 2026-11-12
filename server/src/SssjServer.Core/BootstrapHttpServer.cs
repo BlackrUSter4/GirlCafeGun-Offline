@@ -186,8 +186,17 @@ public sealed class BootstrapHttpServer
             case "/notice.txt":
                 return (200, "OK", Json(Notice()), JsonContentType);
 
+            // /notice.html is the address the client asks for (OfflineWebUrl in Lib.lua, written by
+            // tools/patch_lua_offline_web.py; before that, emulator-era patch_apk.py). Keep this path:
+            // a lua.u that is newer than the APK must still get a page. The page itself is Web/notice/index.html.
             case "/notice.html":
+                if (WebAssets.TryGet("/web/notice/index.html", out var noticePage, out var noticeType))
+                    return (200, "OK", noticePage, noticeType);
                 return (200, "OK", Encoding.UTF8.GetBytes(NoticeHtml()), "text/html; charset=utf-8");
+
+            // WebViews ask for this on every page; answer quietly instead of logging a 404.
+            case "/favicon.ico":
+                return (204, "No Content", Array.Empty<byte>(), "image/x-icon");
 
             case "/gapi/client/config":
             {
@@ -207,6 +216,10 @@ public sealed class BootstrapHttpServer
 
             default:
             {
+                // Local copies of the pages the client used to load from the publisher's web servers.
+                if (WebAssets.TryGet(req.Path, out var webBody, out var webType))
+                    return (200, "OK", webBody, webType);
+
                 Log.Warn($"[http] 未处理 {req.Method} {req.Path}");
                 return (404, "Not Found", Json(new JsonObject()), JsonContentType);
             }
