@@ -68,7 +68,7 @@ public sealed class GmDebugEditorFeature : IGameFeature
     /// 所以用 <see cref="Regex.Matches"/> 逐条处理。
     /// </summary>
     private static readonly Regex CallPattern = new(
-        @"(?<obj>[A-Za-z_][A-Za-z0-9_]*)\s*[:.]\s*(?<fn>[A-Za-z_][A-Za-z0-9_]*)\s*\((?<args>[^()]*)\)",
+        @"(?<obj>[A-Za-z_][A-Za-z0-9_]*)\s*[:.]\s*(?<fn>[A-Za-z_][A-Za-z0-9_]*)\s*\((?<args>(?:[^()]|\([^()]*\))*)\)",
         RegexOptions.Compiled);
 
     /// <summary>
@@ -188,6 +188,21 @@ public sealed class GmDebugEditorFeature : IGameFeature
             case "SetPlayerVigour":
                 return SetMoney(session, player, MoneyType.Vigour, args, "Stamina");
 
+            // ---- In-game GM panel money buttons (GMTable.txt rows, Target=2): MoneyLogic:AddX(n, TLog.REASON_DEBUGEDITOR, 1, seq) ----
+            case "AddGold": return AddMoneyCmd(session, player, MoneyType.Gold, args, +1, "Gold");
+            case "ReduceGold": return AddMoneyCmd(session, player, MoneyType.Gold, args, -1, "Gold");
+            case "AddFreeDiamond": return AddMoneyCmd(session, player, MoneyType.FreeDiamond, args, +1, "Free Diamonds");
+            case "ReduceFreeDiamond": return AddMoneyCmd(session, player, MoneyType.FreeDiamond, args, -1, "Free Diamonds");
+            case "AddPayDiamond": return AddMoneyCmd(session, player, MoneyType.PayDiamond, args, +1, "Paid Diamonds");
+            case "ReducePayDiamond": return AddMoneyCmd(session, player, MoneyType.PayDiamond, args, -1, "Paid Diamonds");
+            case "AddCoffeeCoin": return AddMoneyCmd(session, player, MoneyType.CoffeeCoin, args, +1, "Cafe Coins");
+            case "ReduceCoffeeCoin": return AddMoneyCmd(session, player, MoneyType.CoffeeCoin, args, -1, "Cafe Coins");
+            // MoneyLogic:AddMoney(id, n, ...) and ReduceMoney(id, n, ...): the first argument is the currency id.
+            case "AddMoney" when obj == "MoneyLogic" && args.Count >= 2:
+                return AddMoneyCmd(session, player, args[0], args.GetRange(1, args.Count - 1), +1, MoneyType.NameOf(args[0]));
+            case "ReduceMoney" when obj == "MoneyLogic" && args.Count >= 2:
+                return AddMoneyCmd(session, player, args[0], args.GetRange(1, args.Count - 1), -1, MoneyType.NameOf(args[0]));
+
             case "SetPlayerItem":
             {
                 if (args.Count < 5)
@@ -262,6 +277,18 @@ public sealed class GmDebugEditorFeature : IGameFeature
             new KeyValuePair<uint, int>(Player.ComposeTaskId(entry.Group, entry.Id), value),
         });
         return $"type={type} id={id} set complete (progress {need})";
+    }
+
+    /// <summary>Adds (sign +1) or subtracts (sign -1) args[0] of one currency. Result is clamped to 0..int.MaxValue.</summary>
+    private static string AddMoneyCmd(ClientSession session, Player player, int moneyId,
+                                      List<int> args, int sign, string label)
+    {
+        if (args.Count < 1)
+            return $"{label}: amount missing";
+        long next = (long)player.GetMoney(moneyId) + (long)sign * Math.Abs((long)args[0]);
+        player.SetMoney(moneyId, (int)Math.Clamp(next, 0L, int.MaxValue));
+        GameNotify.PushMoney(session, player, moneyId);
+        return $"{label} {(sign > 0 ? "+" : "-")}{Math.Abs((long)args[0])} → {player.GetMoney(moneyId)}";
     }
 
     private static string SetMoney(ClientSession session, Player player, int moneyId,
