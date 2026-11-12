@@ -23,7 +23,11 @@ param(
     [Parameter(Mandatory=$true)][string]$OrigApk,
     [string]$Ndk     = "$env:LOCALAPPDATA\Android\Sdk\ndk\27.2.12479018",
     [string]$BuildTools = "$env:LOCALAPPDATA\Android\Sdk\build-tools\35.0.0",
-    [switch]$SkipServer
+    # android.jar for the first-run installer (javac + d8). Needs a JDK too (JAVA_HOME).
+    [string]$AndroidJar = "$env:LOCALAPPDATA\Android\Sdk\platforms\android-35\android.jar",
+    [switch]$SkipServer,
+    # Skip step 7 (GirlCafeGun.apk: first-run data installer + gamepad axes). gcg_offline.apk is still built.
+    [switch]$NoInstaller
 )
 $ErrorActionPreference = "Stop"
 $root  = Split-Path $PSScriptRoot -Parent
@@ -90,3 +94,16 @@ try {
 $apk = Join-Path $root "gcg_offline.apk"
 Write-Host "`nBuilt: $apk  ($([math]::Round((Get-Item $apk).Length/1MB,1)) MB)" -ForegroundColor Green
 & $apksigner verify --print-certs $apk | Select-String "SHA-256" | Select-Object -First 1
+
+# 7. phone package: the same APK plus the first-run data installer (classes2.dex) and raw joystick
+#    axes for the gamepad layer. Players install GirlCafeGun.apk and pick the data file in the game
+#    (HOW-TO-INSTALL.txt); no PC, adb or root. apk-build/make_data_package.py builds the data file.
+if (-not $NoInstaller) {
+    if (-not (Test-Path $AndroidJar)) { throw "android.jar not found: $AndroidJar  (set -AndroidJar, or pass -NoInstaller)" }
+    if (-not $env:JAVA_HOME -or -not (Test-Path (Join-Path $env:JAVA_HOME "bin\javac.exe"))) { throw "JAVA_HOME must point to a JDK (javac) for the installer, or pass -NoInstaller" }
+    $env:GCG_NDK = $Ndk; $env:GCG_BUILD_TOOLS = $BuildTools; $env:GCG_ANDROID_JAR = $AndroidJar
+    $phoneApk = Join-Path $root "GirlCafeGun.apk"
+    python -I (Join-Path $ab "build_offline_apk.py") $apk $phoneApk
+    if ($LASTEXITCODE -ne 0) { throw "build_offline_apk.py failed" }
+    Write-Host "Built: $phoneApk  ($([math]::Round((Get-Item $phoneApk).Length/1MB,1)) MB)" -ForegroundColor Green
+}

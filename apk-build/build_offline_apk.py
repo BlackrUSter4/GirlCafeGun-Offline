@@ -9,6 +9,8 @@ usage: python build_offline_apk.py [base.apk] [out.apk] [--publish <dotnet publi
   With --publish the embedded server (libsssjdata.so) and the runtime .so files are refreshed too, so a
   server change reaches the APK. tools/package.ps1 does this.
 Tool paths: C:\\android-build\\{android-ndk-r27d, platforms\\android-35, bt\\android-15, jdk\\*}.
+Override with the environment: GCG_NDK (NDK root), GCG_ANDROID_JAR (android.jar), GCG_BUILD_TOOLS
+(folder with d8, zipalign, apksigner), JAVA_HOME (a JDK). scripts/build-apk.ps1 sets them.
 """
 import glob
 import os
@@ -21,11 +23,15 @@ import zipfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 TOOLS = r"C:\android-build"
-NDK_BIN = os.path.join(TOOLS, "android-ndk-r27d", "toolchains", "llvm", "prebuilt", "windows-x86_64", "bin")
+NDK = os.environ.get("GCG_NDK") or os.path.join(TOOLS, "android-ndk-r27d")
+NDK_BIN = os.path.join(NDK, "toolchains", "llvm", "prebuilt", "windows-x86_64", "bin")
 CC = os.path.join(NDK_BIN, "aarch64-linux-android30-clang.cmd")
-ANDROID_JAR = os.path.join(TOOLS, "platforms", "android-35", "android.jar")
-BT = os.path.join(TOOLS, "bt", "android-15")
-JDK = glob.glob(os.path.join(TOOLS, "jdk", "*"))[0]
+ANDROID_JAR = os.environ.get("GCG_ANDROID_JAR") or os.path.join(TOOLS, "platforms", "android-35", "android.jar")
+BT = os.environ.get("GCG_BUILD_TOOLS") or os.path.join(TOOLS, "bt", "android-15")
+JDK = (glob.glob(os.path.join(TOOLS, "jdk", "*")) or [os.environ.get("JAVA_HOME", "")])[0]
+for _what, _p in (("NDK clang", CC), ("android.jar", ANDROID_JAR), ("build-tools", BT), ("JDK", JDK)):
+    if not _p or not os.path.exists(_p):
+        raise SystemExit("%s not found: %r (see the tool paths in the header of this file)" % (_what, _p))
 
 
 def run(cmd, **kw):
