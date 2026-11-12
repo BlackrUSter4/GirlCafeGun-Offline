@@ -118,7 +118,7 @@ public sealed class FormationHandler
         var fi = new FormationInfo
         {
             Id = formation.Id,
-            Title = string.IsNullOrWhiteSpace(formation.Title) ? $"队伍 {formation.Id}" : formation.Title,
+            Title = string.IsNullOrWhiteSpace(formation.Title) ? $"Team {formation.Id}" : formation.Title,
         };
         foreach (var slot in formation.Slots)
         {

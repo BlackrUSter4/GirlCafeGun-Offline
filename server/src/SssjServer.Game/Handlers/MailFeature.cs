@@ -147,7 +147,7 @@ public sealed class MailFeature : IGameFeature
         });
     }
 
-    internal const string ProducerNotice = "制作人：SteveS，勿擅自转发";
+    internal const string ProducerNotice = "Producer: SteveS. Do not redistribute.";
     internal static bool EnsureProducerMail(Player player, List<MailEntry> mails)
     {
         const string flag = "producerNoticeSteveS20261028";
@@ -155,7 +155,7 @@ public sealed class MailFeature : IGameFeature
         mails.Add(new MailEntry {
             Id = mails.Count == 0 ? 1 : mails.Max(m => m.Id) + 1,
             RecvTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Title = "制作人声明", Sender = "SteveS", Content = ProducerNotice, ExpiryTime = 0,
+            Title = "Producer's Notice", Sender = "SteveS", Content = ProducerNotice, ExpiryTime = 0,
         });
         player.Extra[flag] = true;
         return true;
@@ -495,10 +495,10 @@ public sealed class MailFeature : IGameFeature
             ReadFlag = 0,
             Color = 0,
             RecvTime = now,
-            Title = "欢迎回到双生视界",
-            Sender = "运营团队",
-            Content = "指挥官，欢迎回来！\n这里是本地服务端的邮件系统。\n" +
-                      "附件是一点点启动资源，点「领取」即可放入背包。",
+            Title = "Welcome Back to Girl Cafe Gun",
+            Sender = "Operations Team",
+            Content = "Commander, welcome back!\nThis is the local server's mail system.\n" +
+                      "The attachment holds a few starter resources. Tap \"Claim\" to add them to your inventory.",
             ExpiryTime = 0,                      // 种子邮件不过期
             Items = new List<int[]>
             {

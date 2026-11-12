@@ -91,9 +91,9 @@ public sealed class GmUnlockReport
     }
 
     public string Describe()
-        => $"货币 {_money.Count} 种 / 背包 {_items.Count} 项（新卡 {NewCards} 张）/ " +
-           $"移除 {_removed.Count} 项 / 关卡 {_levels.Count} 关 / 任务值 {_tasks.Count} 条 / " +
-           $"新少女 {_girls.Count} 位{(LevelChanged ? " / 等级已变更" : "")}";
+        => $"Currencies {_money.Count} / Items {_items.Count} (new cards {NewCards}) / " +
+           $"Removed {_removed.Count} / Stages {_levels.Count} / Task values {_tasks.Count} / " +
+           $"New girls {_girls.Count}{(LevelChanged ? " / level changed" : "")}";
 }
 
 /// <summary>

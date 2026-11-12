@@ -138,9 +138,9 @@ public sealed class RewardGrantResult
     /// <summary>日志用的一行摘要。</summary>
     public string Describe()
         => _rewards.Count == 0
-            ? "（无）"
+            ? "(none)"
             : string.Join(", ", _rewards.Select(r =>
-                $"{r.Name}x{r.Count}{(r.IsMoney ? $"→货币{r.MoneyId}" : $"#{r.ItemGuid}")}[flag{r.Flag}]"));
+                $"{r.Name}x{r.Count}{(r.IsMoney ? $"→currency {r.MoneyId}" : $"#{r.ItemGuid}")}[flag{r.Flag}]"));
 
     internal void AddReward(GrantedReward reward) => _rewards.Add(reward);
 

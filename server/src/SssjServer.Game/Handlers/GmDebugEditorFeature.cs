@@ -108,7 +108,7 @@ public sealed class GmDebugEditorFeature : IGameFeature
         if (matches.Count == 0)
         {
             Log.Warn($"[session {session.Id}] [gm] 无法从 DebugEditor 参数里解析出「模块:方法(…)」：{rawParam}");
-            Reply(session, "无法解析：" + rawParam);
+            Reply(session, "Cannot parse: " + rawParam);
             return Task.CompletedTask;
         }
 
@@ -136,10 +136,10 @@ public sealed class GmDebugEditorFeature : IGameFeature
         {
             // ---- 全量类（对上本服务端的 GmUnlock 四个域）----
             case "AddAllNormalItem":
-                return Push(session, player, gm.ApplyItems(player), "全道具");
+                return Push(session, player, gm.ApplyItems(player), "All items");
 
             case "AddAllCardItem":
-                return Push(session, player, gm.ApplyCards(player), "全角色卡");
+                return Push(session, player, gm.ApplyCards(player), "All character cards");
 
             case "UnlockAllChapter":
             {
@@ -152,9 +152,9 @@ public sealed class GmDebugEditorFeature : IGameFeature
                         : MapList.Compose(MapList.StarMask, 1);
                     player.Levels[mapId] = composed;
                     GameNotify.PushChapter(session, mapId, composed);
-                    return $"{args[0]}-{args[1]}(d{args[2]}) 记为三星通关";
+                    return $"{args[0]}-{args[1]}(d{args[2]}) marked as 3-star cleared";
                 }
-                return Push(session, player, gm.ApplyLevels(player), "全关卡三星");
+                return Push(session, player, gm.ApplyLevels(player), "All stages 3-star");
             }
 
             // ---- 玩家数值 ----
@@ -166,37 +166,37 @@ public sealed class GmDebugEditorFeature : IGameFeature
                 player.Level = n;
                 player.Exp = 0;
                 GameNotify.PushLevelExp(session, player);
-                return $"等级 → LV.{player.Level}";
+                return $"Level → LV.{player.Level}";
             }
 
             case "SetPlayerExp":
             {
                 player.Exp = args.Count >= 1 ? Math.Max(0, args[0]) : 0;
                 GameNotify.PushLevelExp(session, player);
-                return $"经验 → {player.Exp}";
+                return $"EXP → {player.Exp}";
             }
 
             case "SetPlayerGold":
-                return SetMoney(session, player, MoneyType.Gold, args, "金币");
+                return SetMoney(session, player, MoneyType.Gold, args, "Gold");
 
             case "SetPlayerDiamond":
-                return SetMoney(session, player, MoneyType.FreeDiamond, args, "免费钻");
+                return SetMoney(session, player, MoneyType.FreeDiamond, args, "Free Diamonds");
 
             case "SetPlayerPayDiamond":
-                return SetMoney(session, player, MoneyType.PayDiamond, args, "付费钻");
+                return SetMoney(session, player, MoneyType.PayDiamond, args, "Paid Diamonds");
 
             case "SetPlayerVigour":
-                return SetMoney(session, player, MoneyType.Vigour, args, "体力");
+                return SetMoney(session, player, MoneyType.Vigour, args, "Stamina");
 
             case "SetPlayerItem":
             {
                 if (args.Count < 5)
-                    return $"SetPlayerItem 需要 5 个参数(G,D,P,L,N)，收到 {args.Count} 个";
+                    return $"SetPlayerItem needs 5 arguments (G,D,P,L,N), got {args.Count}";
                 var granted = _ctx.Rewards.Grant(player,
                     new[] { new[] { args[0], args[1], args[2], args[3], args[4] } },
                     RewardSource.Extra);
                 GameNotify.PushRewards(session, player, granted);
-                return $"发放 {granted.Describe()}";
+                return $"Granted {granted.Describe()}";
             }
 
             // ---- 任务 / 成就 ----
@@ -204,20 +204,20 @@ public sealed class GmDebugEditorFeature : IGameFeature
             {
                 // GMTable.txt: ENUM.Task.Achievement.Activity|Task:1:Achive:2:Act:3 + ID
                 if (args.Count < 2)
-                    return $"AchievementComplete 需要 (type,id)，收到 {args.Count} 个参数";
+                    return $"AchievementComplete needs (type,id), got {args.Count} arguments";
                 return CompleteOne(session, player, args[0], args[1]);
             }
 
             case "SetTaskValue":
             {
                 if (args.Count < 3)
-                    return $"SetTaskValue 需要 (group,id,value)，收到 {args.Count} 个参数";
+                    return $"SetTaskValue needs (group,id,value), got {args.Count} arguments";
                 player.SetTask(args[0], args[1], args[2]);
                 GameNotify.PushTaskValues(session, new[]
                 {
                     new KeyValuePair<uint, int>(Player.ComposeTaskId(args[0], args[1]), args[2]),
                 });
-                return $"任务值 ({args[0]},{args[1]}) = {args[2]}";
+                return $"Task value ({args[0]},{args[1]}) = {args[2]}";
             }
 
             default:
@@ -225,11 +225,11 @@ public sealed class GmDebugEditorFeature : IGameFeature
                 {
                     Log.Warn($"[session {session.Id}] [gm] 原服命令 {obj}:{fn}() 已知但本服务端未实现" +
                              "（等武器/符文/少女养成域落地）");
-                    return $"{fn} 未实现（已知原服命令）";
+                    return $"{fn} not implemented (known original-server command)";
                 }
                 Log.Warn($"[session {session.Id}] [gm] ★ 未映射的原服 GM 命令 {obj}:{fn}(" +
                          $"{string.Join(",", args)}) —— 这是「下一个要实现什么」的信号");
-                return $"{fn} 未映射";
+                return $"{fn} not mapped";
         }
     }
 
@@ -247,10 +247,10 @@ public sealed class GmDebugEditorFeature : IGameFeature
             case 1: entry = table.GetDaily(id); achieveKey = false; break;
             case 2: entry = table.GetAchieve(id); achieveKey = true; break;
             case 3: entry = table.GetAchieveOther(id); achieveKey = true; break;
-            default: return $"AchievementComplete 的 type={type} 未知（应为 1 任务 / 2 成就 / 3 活动）";
+            default: return $"AchievementComplete: unknown type={type} (expected 1 task / 2 achievement / 3 activity)";
         }
         if (entry is null)
-            return $"配置里没有 type={type} id={id}";
+            return $"No config entry for type={type} id={id}";
 
         int need = entry.RequiredCount(achieveKey);
         if (need == int.MaxValue || need <= 0)
@@ -261,7 +261,7 @@ public sealed class GmDebugEditorFeature : IGameFeature
         {
             new KeyValuePair<uint, int>(Player.ComposeTaskId(entry.Group, entry.Id), value),
         });
-        return $"type={type} id={id} 置完成（进度 {need}）";
+        return $"type={type} id={id} set complete (progress {need})";
     }
 
     private static string SetMoney(ClientSession session, Player player, int moneyId,
@@ -295,7 +295,7 @@ public sealed class GmDebugEditorFeature : IGameFeature
             GameNotify.PushGirl(session, girl);
         if (report.LevelChanged)
             GameNotify.PushLevelExp(session, player);
-        return $"{what}：{report.Describe()}";
+        return $"{what}: {report.Describe()}";
     }
 
     /// <summary>

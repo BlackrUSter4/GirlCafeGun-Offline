@@ -300,8 +300,8 @@ public sealed class FriendFeature : IGameFeature
     /// </summary>
     internal static readonly string[] BotNames =
     {
-        "小南", "阿澈", "柚子茶", "月见草", "星野三号", "不加糖", "晚安喵", "雨宫栞",
-        "白露未干", "苏打水", "鹿野院", "夜航船", "橘子汽水", "半糖去冰", "一颗奇异果", "岛风号",
+        "Xiaonan", "Ache", "Yuzu Tea", "Moon Primrose", "Hoshino No. 3", "No Sugar", "Goodnight Meow", "Shiori Amamiya",
+        "Dew Not Yet Dry", "Soda Water", "Kanoin", "Night Ferry", "Orange Soda", "Half Sugar Iced", "A Lone Kiwi", "Shimakaze",
     };
 
     /// <summary>
@@ -314,11 +314,11 @@ public sealed class FriendFeature : IGameFeature
     internal static readonly string[] BotSigns =
     {
         "",
-        "今天也要元气满满！",
-        "咖啡馆常客，欢迎来喝一杯",
-        "求带飞，谢谢店长",
-        "夜猫子，凌晨在线",
-        "路过，留个爪",
+        "Full of energy again today!",
+        "Cafe regular. Come have a drink!",
+        "Please carry me, thanks Manager!",
+        "Night owl, online at dawn",
+        "Just passing by, leaving a paw print",
     };
 
     // ================================================================ Extra / tip key

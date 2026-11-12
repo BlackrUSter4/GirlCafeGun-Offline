@@ -324,15 +324,16 @@ public sealed class ClubFeature : IGameFeature
     /// </summary>
     internal static readonly string[] NpcClubNames =
     {
-        "星穹咖啡厅", "第七集团", "黑境远征队", "蔷薇结社", "深空观测所", "晨曦小队",
-        "夜莺酒馆", "白鲸事务所", "量子茶室", "灯塔守夜人", "红叶巡逻队", "银河快递",
+        // English names kept within the 12-character club-name limit, so they fit the same UI as player clubs.
+        "Starvault", "Seventh Unit", "Black Front", "Rose Society", "Deep Space", "Dawn Squad",
+        "Nightingale", "White Whale", "Quantum Tea", "Lighthouse", "Red Leaf", "Galaxy Post",
     };
 
     /// <summary>假社团社长的名字池（与 <see cref="NpcClubNames"/> 同样按偏移取）。</summary>
     internal static readonly string[] NpcHeaderNames =
     {
-        "薇尔莉特", "老陈", "K先生", "夏目", "阿尔法", "雾岛",
-        "白河", "十三号", "南宫", "小满", "赫尔佳", "月见",
+        "Violet", "Old Chen", "Mr. K", "Natsume", "Alpha", "Kirishima",
+        "Shirakawa", "No. 13", "Nangong", "Xiaoman", "Helga", "Tsukimi",
     };
 
     private GameFeatureContext _ctx = null!;
@@ -1987,7 +1988,7 @@ public sealed class ClubFeature : IGameFeature
 
     /// <summary>空名字会让成员列表出现空白行，给一个可见兜底（<c>name</c> 是硬必填）。</summary>
     internal static string DisplayName(Player player)
-        => string.IsNullOrEmpty(player.Name) ? (player.Account.Length > 0 ? player.Account : "无名") : player.Name;
+        => string.IsNullOrEmpty(player.Name) ? (player.Account.Length > 0 ? player.Account : "Nameless") : player.Name;
 
     private static long Now() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 

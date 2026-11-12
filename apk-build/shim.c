@@ -177,6 +177,20 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
         char* sl = strrchr(g_libdir, '/'); if (sl) *sl = 0;
     }
     LOGI("JNI_OnLoad libdir=%s", g_libdir);
+    // First-run data installer (gcg.offline.Installer in classes2.dex). JNI_OnLoad runs on the thread that called
+    // System.loadLibrary, so FindClass resolves through the app's class loader. Missing class = old APK: ignore.
+    {
+        JNIEnv* env = 0;
+        if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) == JNI_OK && env) {
+            jclass c = (*env)->FindClass(env, "gcg/offline/Installer");
+            if (c) {
+                jmethodID m = (*env)->GetStaticMethodID(env, c, "boot", "()V");
+                if (m) (*env)->CallStaticVoidMethod(env, c, m);
+            }
+            if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); (*env)->ExceptionClear(env); LOGE("installer boot failed"); }
+            else LOGI("installer boot called");
+        }
+    }
     pthread_t ps, pp;
     pthread_create(&ps, 0, server_thread, 0);
     pthread_create(&pp, 0, patch_thread, 0);

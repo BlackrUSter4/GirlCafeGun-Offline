@@ -377,7 +377,7 @@ public sealed class BagFeature : IGameFeature
 
         if (param is not JsonArray list || list.Count == 0)
         {
-            ReplyLuaCallError(session, CmdSellItem, ErrNoItem, "没有选择要分解的物品");
+            ReplyLuaCallError(session, CmdSellItem, ErrNoItem, "No item selected to dismantle");
             return Task.CompletedTask;
         }
         if (list.Count > MaxSellSelect)
@@ -410,7 +410,7 @@ public sealed class BagFeature : IGameFeature
 
         if (sold.Count == 0)
         {
-            ReplyLuaCallError(session, CmdSellItem, ErrNoItem, "没有可分解的物品（已锁定或已装备）");
+            ReplyLuaCallError(session, CmdSellItem, ErrNoItem, "No dismantlable items (locked or equipped)");
             return Task.CompletedTask;
         }
 
@@ -451,7 +451,7 @@ public sealed class BagFeature : IGameFeature
 
         if (param is not JsonArray list || list.Count == 0)
         {
-            ReplyLuaCallError(session, CmdSellStuff, ErrNoItem, "没有选择要分解的物资");
+            ReplyLuaCallError(session, CmdSellStuff, ErrNoItem, "No supplies selected to dismantle");
             return Task.CompletedTask;
         }
 
@@ -485,7 +485,7 @@ public sealed class BagFeature : IGameFeature
 
         if (sold.Count == 0)
         {
-            ReplyLuaCallError(session, CmdSellStuff, ErrNoItem, "没有可分解的物资（已锁定或已装备）");
+            ReplyLuaCallError(session, CmdSellStuff, ErrNoItem, "No dismantlable supplies (locked or equipped)");
             return Task.CompletedTask;
         }
 
@@ -525,7 +525,7 @@ public sealed class BagFeature : IGameFeature
 
         if (guids is null || guids.Count == 0)
         {
-            ReplyLuaCallError(session, cmd, ErrNoItem, "没有选择要分解的对象");
+            ReplyLuaCallError(session, cmd, ErrNoItem, "No target selected to dismantle");
             return Task.CompletedTask;
         }
 
@@ -555,7 +555,7 @@ public sealed class BagFeature : IGameFeature
 
         if (sold.Count == 0)
         {
-            ReplyLuaCallError(session, cmd, ErrNoItem, "没有可分解的对象（已锁定或已装备）");
+            ReplyLuaCallError(session, cmd, ErrNoItem, "No dismantlable targets (locked or equipped)");
             return Task.CompletedTask;
         }
 
