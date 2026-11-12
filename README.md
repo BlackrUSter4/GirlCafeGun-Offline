@@ -64,7 +64,8 @@ GirlCafeGun-Offline/
 │   ├─ 02-RUN-SERVER.md      run the server standalone (dev)
 │   ├─ 03-BUILD-APK.md       rebuild the offline APK from source
 │   ├─ 04-NO-ROOT.md         install the bundles/assets without root (Shizuku etc.)
-│   └─ 05-UNCENSOR.md        the love.u uncensor patch (restores Live2D interactions)
+│   ├─ 05-UNCENSOR.md        the love.u uncensor patch (restores Live2D interactions)
+│   └─ 06-CONNECTION-FIX.md  why "Connection error" happened and the static envir.json fix
 ├─ assets/                 game files — NOT committed (see .gitignore); delivered via the pack
 │   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device
 │   └─ device_assets/           added_bundles.txt (the bundle list) + version.data
@@ -104,7 +105,7 @@ Re-signing uses the included debug key, so you can update an install in place wi
 | Area | Status |
 |------|--------|
 | Offline play / airplane mode | ✅ Works (fresh account, tutorial, story, gacha, shop) |
-| "Connection error" on New Account | ✅ Fixed in this build (network gate patched) |
+| "Connection error" / calls official server | ✅ Fixed — serverlist points local statically ([docs/06-CONNECTION-FIX.md](docs/06-CONNECTION-FIX.md)) + airplane gate patched |
 | Missing voice / scenes / art | ✅ Fixed — the full bundle set the game references now ships |
 | Censored Live2D touch/flirting interactions | ✅ Restored by default (love.u) — [docs/05-UNCENSOR.md](docs/05-UNCENSOR.md); `-NoUncensor` to opt out |
 | Chinese title buttons (新账号 / 输入账号) | ⚠️ Known — baked into the EN login-UI prefab; not yet translated |

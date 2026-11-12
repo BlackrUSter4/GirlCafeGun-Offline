@@ -34,3 +34,4 @@ dist/*.part*
 Thumbs.db
 docs/PLAY-pack.txt
 *.idsig
+dist/

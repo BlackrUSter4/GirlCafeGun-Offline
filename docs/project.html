@@ -123,8 +123,10 @@
       <tr><th>Area</th><th>Status</th><th>Notes</th></tr>
       <tr><td>Offline play / airplane mode</td><td><span class="pill ok">Works</span></td>
         <td>Fresh account, tutorial, story, gacha, shop — all offline. Verified end-to-end.</td></tr>
-      <tr><td>“Connection error” on New Account</td><td><span class="pill ok">Fixed</span></td>
-        <td>The network gate is patched out in this build. (Older builds hit this; this one doesn't.)</td></tr>
+      <tr><td>“Connection error” / still calls the official server</td><td><span class="pill ok">Fixed</span></td>
+        <td>The serverlist config (<code>envir.json</code>) is pointed at the local server statically, so the
+          client never calls online — no runtime race. The airplane network-gate is patched too. Older
+          builds relied on an in-memory patch that could lose the boot race; this one can't.</td></tr>
       <tr><td>Missing voice / scenes / art</td><td><span class="pill ok">Fixed</span></td>
         <td>Earlier builds synced only ~380 bundles; this one ships the full set the game references
           (~4.5&nbsp;GB) so content isn't missing. Not an install mistake — it was a packaging gap.</td></tr>

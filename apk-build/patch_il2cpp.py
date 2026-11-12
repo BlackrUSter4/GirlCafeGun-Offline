@@ -12,6 +12,11 @@
 # New Account path through. RVAs are from the Il2CppDumper dump of this exact 1.0.9 libil2cpp.so;
 # Il2CppDumper's Offset == file offset here (verified against the on-disk bytes).
 #
+# The actual "stops calling the official server" fix lives in the OBB config, not here: the client reads
+# its serverlist from assets/envir.json, so patch_obb_envir.py points the "en" environment at the local
+# server (http://127.0.0.1:9080). That removes the online call and its runtime race. (The in-memory shim
+# still sets disablegm=0 so the local URL stays http rather than being upgraded to https.)
+#
 # usage: python patch_il2cpp.py <libil2cpp.so>   (patches in place)
 import sys
 
@@ -33,7 +38,7 @@ def main(path):
                 print(f"  {name} @0x{off:X}: UNEXPECTED bytes {head.hex()} (want {want_head.hex()}) - wrong binary?")
                 sys.exit(1)
             f.seek(off); f.write(patch)
-            print(f"  {name} @0x{off:X}: patched -> mov w0,#1; ret")
+            print(f"  {name} @0x{off:X}: patched ({len(patch)} bytes)")
     print("done")
 
 if __name__ == "__main__":
