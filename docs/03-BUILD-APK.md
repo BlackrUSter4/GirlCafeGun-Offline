@@ -1,7 +1,36 @@
 # 03 — Rebuild the offline APK
 
+> **Current build (2026-11-11):** `python apk-build/build_offline_apk.py` compiles `shim.c`, `host.c` and
+> the installer and repacks `gcg_offline_fixed.apk` into `GirlCafeGun.apk`; `python apk-build/make_data_package.py`
+> builds `GirlCafeGun-data.gcg`. `host.c` now turns off heap pointer tagging (required on real phones) and
+> keeps saves in `files/sssjsave`. When the server changes, re-run `dotnet publish` (steps below) and replace
+> the data tar **and** the 7 runtime `.so` together. See [05-PHONE-PORT-2026-11-11.md](05-PHONE-PORT-2026-11-11.md).
+
 How the self-contained `gcg_offline.apk` is made, in case you change the server and want to re-bake it.
 The build sources are in `apk-build/`.
+
+## One command: `tools/package.ps1` (use this)
+```powershell
+powershell -File tools\package.ps1                 # normal run
+powershell -File tools\package.ps1 -RebuildData    # force a new GirlCafeGun-data.gcg
+powershell -File tools\package.ps1 -SplitSize 3900m  # split the full pack into 7-Zip volumes
+```
+What it does, in order: `dotnet publish` (linux-bionic-arm64, PublishAot=false) -> `apk-build/build_offline_apk.py --publish`
+(re-bakes `libsssjdata.so` and the 7 runtime `.so` from the fresh publish, rebuilds shim/host/installer, zipaligns,
+signs with `sssj.keystore`) -> verify (apksigner; embedded server DLL SHA-256 == fresh publish) -> data pack
+(`make_data_package.py`; reused when no input is newer) -> two archives in `dist/` -> content allowlist check.
+
+- Base APK: `gcg_offline_fixed.apk` in the project root (stock game + libil2cpp patch + shim). It is git-ignored; keep it.
+- Packs (archive name carries `<date>-<commit>`, `-dirty` if tracked inputs are uncommitted):
+  - `GirlCafeGun-<ver>-update.zip` = `GirlCafeGun.apk`, `INSTALL.txt`, `VERSION.txt`, `CHECKSUMS.sha256`. Small. For people who already ran the data install.
+  - `GirlCafeGun-<ver>-full.zip` = the same + `GirlCafeGun-data.gcg`. First install. The data pack is stored, not compressed (bundles are already compressed).
+  - Nothing else goes in: no server source, keystore, tools or logs. The script fails if an unexpected file is in a pack.
+- The work runs detached in its own window (`Win32_Process.Create`); the calling command waits for `dist/logs/package-<stamp>.done`.
+  Log: `dist/logs/package-<stamp>.log`. Summary: `dist/last-result.txt`. Checksums of the packs: `dist/SHA256SUMS.txt`.
+- After every change: commit, run the script, put `dist/last-result.txt` (paths, sizes, commit) into the card comment, move the card to `review`.
+- Install on a phone: `adb install -r dist\...apk` keeps saves and data (same signature). Ask the project owner first.
+
+The manual steps below explain what the script automates.
 
 ## How it works
 A shim replaces the game's tiny `libmain.so` (Unity's JNI entry) and, on launch:

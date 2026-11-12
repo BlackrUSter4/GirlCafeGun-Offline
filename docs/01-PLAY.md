@@ -6,8 +6,11 @@ pack (OBB), and launch.
 ## Requirements
 - An **arm64** Android emulator or device. [MuMu Player 12](https://www.mumuplayer.com/) is what this
   was built and tested on. **Root is not required to run the game** — but the asset-sync script below
-  uses root to push files, so on MuMu enabling **Root** is the simplest path. **No root?** The APK and
-  OBB still install over `adb`; for the content bundles use the Shizuku / file-manager routes in
+  uses root to push files, so on MuMu enabling **Root** is the simplest path. **No root?** On a phone use
+  the player package (`GirlCafeGun.apk` + `GirlCafeGun-data.gcg`, see
+  [../HOW-TO-INSTALL.txt](../HOW-TO-INSTALL.txt)) or `assets\sync_phone.ps1` over adb; the root-based
+  `sync_device_assets.ps1` fails silently there. Details:
+  [05-PHONE-PORT-2026-11-11.md](05-PHONE-PORT-2026-11-11.md). The Shizuku / file-manager routes are in
   **[04-NO-ROOT.md](04-NO-ROOT.md)**.
 - **No network needed — airplane mode is fine.** Everything the game does stays on `127.0.0.1`
   (nothing leaves the device). The client's offline-blocking "check your network" gate is patched out,

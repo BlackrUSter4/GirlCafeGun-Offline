@@ -35,3 +35,16 @@ Thumbs.db
 docs/PLAY-pack.txt
 *.idsig
 dist/
+
+# --- Phone package, other game versions, patched game bundles: game-derived, never commit ---
+*.xapk
+*.gcg
+*.part
+*.tar.gz
+OtherAPKs/
+assets/old-versions/
+assets/device_assets/overrides/*
+!assets/device_assets/overrides/README.txt
+__pycache__/
+*.tmp
+.vs/

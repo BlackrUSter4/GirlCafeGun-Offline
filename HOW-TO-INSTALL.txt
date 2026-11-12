@@ -1,0 +1,28 @@
+Girl Cafe Gun (offline, English) - how to install on an Android phone
+=====================================================================
+
+You need two files:
+  GirlCafeGun.apk          the game (about 110 MB)
+  GirlCafeGun-data.gcg     the game data (about 5.1 GB)
+
+No PC, no root and no USB debugging are needed. The phone needs about 11 GB free during the
+install (5.1 GB for the data file + 5.1 GB for the installed data); afterwards you can delete
+the data file and 5.1 GB are free again.
+
+1. Copy or download both files to the phone (for example into Downloads).
+2. Open GirlCafeGun.apk and install it. If Android asks, allow installing apps from this source.
+3. Open the game. A window "Install game data" appears.
+4. Tap "Choose file" and select GirlCafeGun-data.gcg.
+5. Wait for the progress bar (a few seconds to 15 minutes, depending on the phone).
+6. Tap "Delete file" to remove the data file and free 5.1 GB (or "Keep file").
+   The game closes.
+7. Open the game again and play. Tap "New Account" on the title screen to start.
+
+Notes
+- Works offline, also in airplane mode. Nothing is sent anywhere.
+- Needs a 64-bit (arm64) Android phone.
+- Black bar on one side of the screen: Settings > Display > Camera cutout > Girl Cafe Gun >
+  "Show camera cutout", then restart the game.
+- Your progress is stored on the phone. Uninstalling the game deletes it.
+- If the install stops with an error, the data file is usually incomplete (download not
+  finished). Download it again and repeat from step 3.

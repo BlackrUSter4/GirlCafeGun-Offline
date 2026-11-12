@@ -12,6 +12,14 @@ Everything stays on the device; it works in full **airplane mode**.
 
 For preservation and study only. **Scan anything you download before running it.**
 
+> **Update 2026-11-12: real phones, English, gamepad, no PC.** The build now runs on non-rooted
+> arm64 phones (tested: Galaxy S24+, Android 17). A first-run installer inside the APK loads the game
+> data from one file, so a player needs no PC, no adb and no root: see
+> [HOW-TO-INSTALL.txt](HOW-TO-INSTALL.txt). Server and GM text is in English. Also new: free store
+> packs offline, working GM money buttons, all-or-nothing gacha, event achievements, a Bluetooth
+> gamepad layer and local copies of the web pages the client used to load online. The list is in
+> [docs/05-PHONE-PORT-2026-11-11.md](docs/05-PHONE-PORT-2026-11-11.md).
+
 ---
 
 ## Quick start — just play
@@ -56,7 +64,16 @@ GirlCafeGun-Offline/
 │   ├─ build-server.ps1      publish the server for Android (arm64, self-contained .NET)
 │   ├─ build-apk.ps1         bake gcg_offline.apk from source (needs your stock APK)
 │   └─ make-asset-pack.ps1   package the player asset pack you host
+├─ HOW-TO-INSTALL.txt       player instructions for the phone package (APK + one data file, no PC)
 ├─ apk-build/              build tooling (shim.c, host.c, repack.py, patch_il2cpp.py, key)
+│   ├─ build_offline_apk.py  self-installing APK: shim + host + installer dex + gamepad axes + server
+│   ├─ installer/            first-run data installer (Java, runs inside the APK)
+│   ├─ make_data_package.py  builds the single data file the installer reads
+│   ├─ patch_inputmanager.py raw joystick axes for the gamepad layer
+│   └─ patch_obb_envir.py    points the OBB server list at the local server
+├─ tools/
+│   ├─ package.ps1           one command: server publish, APK, data package, archives, checks
+│   └─ patch_lua_*.py        client Lua patches (free store packs, gamepad, local web pages)
 ├─ server/                 the embedded server — sssj-new source (MIT) + setting/ (not committed)
 ├─ docs/
 │   ├─ project.html          project overview + limitations (open in a browser)
@@ -65,9 +82,15 @@ GirlCafeGun-Offline/
 │   ├─ 03-BUILD-APK.md       rebuild the offline APK from source
 │   ├─ 04-NO-ROOT.md         install the bundles/assets without root (Shizuku etc.)
 │   ├─ 05-UNCENSOR.md        the love.u uncensor patch (restores Live2D interactions)
-│   └─ 06-CONNECTION-FIX.md  why "Connection error" happened and the static envir.json fix
+│   ├─ 06-CONNECTION-FIX.md  why "Connection error" happened and the static envir.json fix
+│   ├─ 04-MISSING-ASSETS.md  assets the game lists but the bundle set lacks (audit)
+│   ├─ 05-OLD-VERSION-ASSETS.md  assets recovered from other xapk versions
+│   ├─ 05-PHONE-PORT-2026-11-11.md  real-phone fixes, translation, player package, tools
+│   ├─ 06-CONTROLLER.md      Bluetooth gamepad in shooting stages
+│   └─ 07-ONLINE-RESOURCES.md  online addresses the client still asks for: local fixes + ledger
 ├─ assets/                 game files — NOT committed (see .gitignore); delivered via the pack
-│   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device
+│   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device (root)
+│   ├─ sync_phone.ps1           the same for a phone without root, over adb
 │   └─ device_assets/           added_bundles.txt (the bundle list) + version.data
 ├─ CREDITS.md              attribution + intellectual-property notice (read this)
 └─ LICENSE                 MIT — covers this repo's original work only
@@ -110,7 +133,11 @@ Re-signing uses the included debug key, so you can update an install in place wi
 | Censored Live2D touch/flirting interactions | ✅ Restored by default (love.u) — [docs/05-UNCENSOR.md](docs/05-UNCENSOR.md); `-NoUncensor` to opt out |
 | Chinese title buttons (新账号 / 输入账号) | ⚠️ Known — baked into the EN login-UI prefab; not yet translated |
 | Background telemetry calls | ⚠️ Harmless — fail silently offline; don't block play |
-| Non-rooted phones (asset push) | ⚠️ Works via Shizuku / file manager — see [docs/04-NO-ROOT.md](docs/04-NO-ROOT.md) |
+| Non-rooted phones | ✅ Works — in-game data installer ([HOW-TO-INSTALL.txt](HOW-TO-INSTALL.txt)) or `assets\sync_phone.ps1` over adb; Shizuku / file manager route in [docs/04-NO-ROOT.md](docs/04-NO-ROOT.md) |
+| Real arm64 phones (Android 11+) | ✅ Fixed — heap pointer tagging is turned off before the server runtime starts |
+| Store packs / paid currency offline | ✅ Granted free; GM panel money buttons work |
+| Bluetooth gamepad in shooting stages | ✅ Works — [docs/06-CONTROLLER.md](docs/06-CONTROLLER.md) |
+| Notice / server-error web pages | ✅ Served by the embedded server — [docs/07-ONLINE-RESOURCES.md](docs/07-ONLINE-RESOURCES.md) |
 | Official online services / multiplayer | ❌ Out of scope by design |
 
 Full table + explanations: **[docs/project.html](docs/project.html)**.
