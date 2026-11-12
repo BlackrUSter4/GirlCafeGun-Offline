@@ -104,6 +104,13 @@ def main():
             repl["lib/arm64-v8a/libsssjdata.so"] = data
             for so in RUNTIME_SO:
                 repl["lib/arm64-v8a/%s.so" % so] = os.path.join(a.publish, so + ".so")
+        # gamepad: raw joystick axes for the Lua controller layer (docs/06-CONTROLLER.md)
+        dataname = "assets/bin/Data/data.unity3d"
+        with zipfile.ZipFile(base) as zi:
+            open(os.path.join(work, "data.in"), "wb").write(zi.read(dataname))
+        run([sys.executable, "-I", os.path.join(HERE, "patch_inputmanager.py"),
+             os.path.join(work, "data.in"), os.path.join(work, "data.unity3d")])
+        repl[dataname] = os.path.join(work, "data.unity3d")
         unsigned = os.path.join(work, "unsigned.apk")
         with zipfile.ZipFile(base) as zi, zipfile.ZipFile(unsigned, "w") as zo:
             names = zi.namelist()
