@@ -5,7 +5,9 @@
   2. compiles installer/gcg/offline/Installer.java -> classes2.dex (javac + d8)
   3. replaces those entries in the base APK, zipaligns and signs with sssj.keystore (same key as before)
 
-usage: python build_offline_apk.py [base.apk] [out.apk]
+usage: python build_offline_apk.py [base.apk] [out.apk] [--publish <dotnet publish dir> [--setting <dir>]]
+  With --publish the embedded server (libsssjdata.so) and the runtime .so files are refreshed too, so a
+  server change reaches the APK. tools/package.ps1 does this.
 Tool paths: C:\\android-build\\{android-ndk-r27d, platforms\\android-35, bt\\android-15, jdk\\*}.
 """
 import glob
@@ -32,9 +34,51 @@ def run(cmd, **kw):
     subprocess.run(cmd, check=True, env=env, **kw)
 
 
+RUNTIME_SO = ["libhostfxr", "libhostpolicy", "libcoreclr", "libSystem.Native", "libSystem.Globalization.Native",
+              "libSystem.IO.Compression.Native", "libSystem.Security.Cryptography.Native.OpenSsl"]
+
+
+def build_data_tar(publish, setting, dest):
+    """libsssjdata.so = gzip tar of the whole publish (apphost, .so, .dll, .json, .a; no .pdb) + setting/."""
+    import fnmatch
+    import gzip
+    import tarfile
+    names = sorted(n for n in os.listdir(publish)
+                   if n == "SssjServer.App" or any(fnmatch.fnmatch(n, p) for p in ("*.so", "*.dll", "*.json", "*.a")))
+    if "SssjServer.App.dll" not in names or "libmonosgen-2.0.a" not in names:
+        raise SystemExit("publish dir incomplete: " + publish)
+
+    def ti_for(name, path):
+        ti = tarfile.TarInfo(name)
+        ti.size = os.path.getsize(path)
+        ti.mtime = 0
+        ti.mode = 0o755 if name in ("./SssjServer.App",) or name.endswith(".so") else 0o644
+        return ti
+    with open(dest, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, compresslevel=9) as gz, \
+            tarfile.open(fileobj=gz, mode="w", format=tarfile.GNU_FORMAT) as t:
+        for n in names:
+            p = os.path.join(publish, n)
+            with open(p, "rb") as fh:
+                t.addfile(ti_for("./" + n, p), fh)
+        for dp, dirs, fs in os.walk(setting):
+            dirs.sort()
+            for f in sorted(fs):
+                p = os.path.join(dp, f)
+                rel = os.path.relpath(p, setting).replace("\\", "/")
+                with open(p, "rb") as fh:
+                    t.addfile(ti_for("./setting/" + rel, p), fh)
+    print("data tar", dest, os.path.getsize(dest), "bytes,", len(names), "publish files")
+
+
 def main():
-    base = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "gcg_offline_fixed.apk")
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "GirlCafeGun.apk")
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("base", nargs="?", default=os.path.join(ROOT, "gcg_offline_fixed.apk"))
+    ap.add_argument("out", nargs="?", default=os.path.join(ROOT, "GirlCafeGun.apk"))
+    ap.add_argument("--publish", help="dotnet publish dir: re-bake libsssjdata.so and the runtime .so from it")
+    ap.add_argument("--setting", default=os.path.join(ROOT, "server", "setting"))
+    a = ap.parse_args()
+    base, out = a.base, a.out
     work = tempfile.mkdtemp(prefix="gcgapk_")
     try:
         libmain = os.path.join(work, "libmain.so")
@@ -54,6 +98,12 @@ def main():
         dex = os.path.join(dexdir, "classes.dex")
 
         repl = {"lib/arm64-v8a/libmain.so": libmain, "lib/arm64-v8a/libsssjhost.so": host}
+        if a.publish:
+            data = os.path.join(work, "libsssjdata.so")
+            build_data_tar(a.publish, a.setting, data)
+            repl["lib/arm64-v8a/libsssjdata.so"] = data
+            for so in RUNTIME_SO:
+                repl["lib/arm64-v8a/%s.so" % so] = os.path.join(a.publish, so + ".so")
         unsigned = os.path.join(work, "unsigned.apk")
         with zipfile.ZipFile(base) as zi, zipfile.ZipFile(unsigned, "w") as zo:
             names = zi.namelist()
