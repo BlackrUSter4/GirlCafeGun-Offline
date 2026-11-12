@@ -39,27 +39,38 @@ public sealed class ActivityAchieveTable
     public static ActivityAchieveTable Load(string settingDir)
     {
         var t = new ActivityAchieveTable();
-        var table = SettingTable.LoadAuto(Path.Combine(settingDir, "ActivityTemplate2.txt"), "AchievementList");
-        if (table is null)
-            return t;
 
-        foreach (var row in table.Rows)
+        // Every NormalActivity page that claims with NormalActivityGetAward nType=1 reads its achievement ids
+        // from one of these files (NormalActivityConfig.lua Load*). Each column whose name has "Achievement"
+        // holds an id list; EightDaysSignUp2 also puts an id in SpIcon [x,y,scale,achieveId,day].
+        foreach (var file in AchievementFiles)
         {
-            int id = table.Int(row, "Id", -1);
-            if (id <= 0)
+            var table = SettingTable.LoadAuto(Path.Combine(settingDir, file), "Id");
+            if (table is null)
                 continue;
-            var list = ParseBraceList(table.Str(row, "AchievementList"));
-            if (list.Count > 0)
-                t._byActivity[id] = list;
+            var columns = table.Columns.Keys
+                .Where(c => c.Contains("Achievement", StringComparison.OrdinalIgnoreCase)).ToList();
+            bool spIcon = table.Columns.ContainsKey("SpIcon");
+            foreach (var row in table.Rows)
+            {
+                int id = table.Int(row, "Id", -1);
+                if (id <= 0)
+                    continue;
+                var list = columns.SelectMany(c => ParseBraceList(table.Str(row, c))).ToList();
+                if (spIcon)
+                    foreach (var icon in table.Str(row, "SpIcon").Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var parts = icon.Trim().Trim('[', ']').Split(',');
+                        if (parts.Length >= 4 && int.TryParse(parts[3].Trim(), out int a) && a > 0)
+                            list.Add(a);
+                    }
+                if (list.Count == 0)
+                    continue;
+                if (t._byActivity.TryGetValue(id, out var old))
+                    list.AddRange(old);
+                t._byActivity[id] = list.Distinct().ToList();
+            }
         }
-
-        // Restored tower 21 uses Template5, with permanent and daily achievement lists.
-        var towerTasks = SettingTable.Load(Path.Combine(settingDir, "ActivityTemplate5.txt"));
-        if (towerTasks is not null)
-            foreach (var row in towerTasks.Rows)
-                if (towerTasks.Int(row, "Id") == 262)
-                    t._byActivity[262] = ParseBraceList(towerTasks.Str(row, "AchievementList"))
-                        .Concat(ParseBraceList(towerTasks.Str(row, "DailyAchievementList"))).Distinct().ToList();
 
         Log.Info($"[setting] 活动成就配置：{t._byActivity.Count} 个活动映射（含重开262）、" +
                  $"共 {t._byActivity.Values.Sum(l => l.Count)} 条成就" +
@@ -68,6 +79,17 @@ public sealed class ActivityAchieveTable
     }
 
     /// <summary>该活动的成就 id 列表；未登记活动返回空。</summary>
+    /// <summary>Settings files whose rows map an activity id to its achievement ids.</summary>
+    internal static readonly string[] AchievementFiles =
+    {
+        "ActivityTemplate2.txt", "ActivityTemplate4.txt", "ActivityTemplate5.txt",
+        "EightDaysSignUp.txt", "EightDaysSignUp2.txt", "HalloweenActivity.txt",
+        "SodukuActivity.txt", "WalkGridActivity.txt", "WeaponMCGacha.txt", "WishingTreeActivity.txt",
+    };
+
+    /// <summary>True when some settings file lists achievements for this activity.</summary>
+    public bool Knows(int activityId) => _byActivity.ContainsKey(activityId);
+
     public IReadOnlyList<int> AchievesOf(int activityId)
         => _byActivity.TryGetValue(activityId, out var l) ? l : Array.Empty<int>();
 

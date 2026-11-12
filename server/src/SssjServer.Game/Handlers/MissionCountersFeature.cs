@@ -125,7 +125,7 @@ public sealed class MissionCountersFeature : IGameFeature
                 if (EventKit.Number(param, "nCmd") == 1) EventMissionProgress.Bump(player, "53");
                 break;
             case "SignUpMsg":
-                EventMissionProgress.Bump(player, "43");
+                EventMissionProgress.RecordLoginDay(player, DateTimeOffset.UtcNow);
                 EventMissionProgress.Bump(player, $"43:{EventKit.Number(param, "nId")}");
                 break;
         }
