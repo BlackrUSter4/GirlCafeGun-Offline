@@ -263,6 +263,15 @@ public sealed class World
         int max = _expTable.MaxVigour(player.Level);
         int cur = player.Vigour;
 
+        // gcg2#1: the client refuses every purchase while Power > max ("Power is over max limit"),
+        // so an over-cap value (GM provision, refunds) is cut back to the cap at login.
+        if (cur > max)
+        {
+            player.SetMoney(MoneyType.Vigour, max);
+            player.VigourTime = now;
+            Log.Info($"[world] Vigour clamped account={player.Account} {cur} -> {max}");
+            return;
+        }
         if (cur >= max)
         {
             player.VigourTime = now;
