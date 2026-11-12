@@ -270,6 +270,7 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
         // gcg2#12: everything from here on is all-or-nothing. If anything throws after the payment, the player is put
         // back to this snapshot, so currency is never lost without a draw.
         string backup = PlayerStore.Snapshot(player);
+        bool committed = false;   // true once the draw is saved: after that the client may already know it, never roll back
         try
         {
         RefreshFreeState(session, player, now);
@@ -308,6 +309,7 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
         var history = GachaHistory.Append(player,1,pool.Id,now,results.Select(r=>new[]{r.Card.G,r.Card.D,r.Card.P,r.Card.L}),payment,
             results.FindIndex(r=>r.ByProtect)+1);
         _ctx.Store.Save(player);
+        committed = true;
 
         GachaHistory.Push(session,1,history);
 
@@ -334,6 +336,12 @@ public sealed partial class GachaFeature : IGameFeature, IGamePulseFeature
                  $"；保底计数 (15,{TaskProtectBegin + poolId})=" +
                  $"{player.GetTask(TaskGroup, TaskProtectBegin + poolId)}");
         return Task.CompletedTask;
+        }
+        catch (Exception ex) when (committed)
+        {
+            // The draw is saved; only the pushes or the reply failed. Keep the saved state (the client re-syncs on reconnect).
+            Log.Error($"[session {session.Id}] Lottery nId={poolId} saved, but sending the result failed: {ex}");
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
