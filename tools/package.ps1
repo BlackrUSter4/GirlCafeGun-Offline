@@ -34,6 +34,9 @@ $Dist = Join-Path $Root "dist"
 $Pkg = "com.biligameglobal.girlcafegungp"
 $SevenZip = "C:\Program Files\7-Zip\7z.exe"
 $BT = "C:\android-build\bt\android-15"
+$jdk = (Get-ChildItem "C:\android-build\jdk" -Directory | Select-Object -First 1).FullName
+$env:JAVA_HOME = $jdk
+$env:PATH = "$jdk\bin;$env:PATH"
 
 function Step($m) { Write-Host ("`n=== " + $m + "  [" + (Get-Date -Format HH:mm:ss) + "]") -ForegroundColor Cyan }
 function Run([string]$exe, [string[]]$a) {
