@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   One command: server source -> signed offline APK -> shareable archives in dist\.
 
@@ -17,6 +17,7 @@
 
 .PARAMETER Foreground    run inline, no detach
 .PARAMETER RebuildData   rebuild the data package even if it looks current
+.PARAMETER Password     password of both zip packs (AES-256; needs 7-Zip, WinRAR or similar to open). No default: pass -Password or set the GCG_PACK_PASSWORD environment variable.
 .PARAMETER SplitSize     7-Zip volume size for the full pack, e.g. 3900m (FAT32 / upload limits). Default: one file.
 .PARAMETER BaseApk       base APK (stock game + shim + fixes). Default: gcg_offline_fixed.apk in the project root.
 #>
@@ -24,11 +25,13 @@ param(
     [switch]$Foreground,
     [switch]$RebuildData,
     [string]$SplitSize = "",
+    [string]$Password = $env:GCG_PACK_PASSWORD,
     [string]$BaseApk = "",
     [switch]$Inner,
     [string]$Stamp = ""
 )
 $ErrorActionPreference = "Stop"
+if (-not $Password) { throw "No pack password. Pass -Password or set the GCG_PACK_PASSWORD environment variable." }
 $Root = Split-Path -Parent $PSScriptRoot
 $Dist = Join-Path $Root "dist"
 $Pkg = "com.biligameglobal.girlcafegungp"
@@ -54,6 +57,7 @@ if (-not $Inner -and -not $Foreground) {
     $cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -Inner -Stamp {1}' -f $PSCommandPath, $stamp
     if ($RebuildData) { $cmd += " -RebuildData" }
     if ($SplitSize) { $cmd += " -SplitSize $SplitSize" }
+    $cmd += ' -Password "{0}"' -f $Password
     if ($BaseApk) { $cmd += ' -BaseApk "{0}"' -f $BaseApk }
     $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd; CurrentDirectory = $Root }
     if ($r.ReturnValue -ne 0) { throw "could not start the worker (Win32_Process.Create = $($r.ReturnValue))" }
@@ -221,8 +225,8 @@ NOTES
     Get-ChildItem $Dist -File -Filter "GirlCafeGun-*" | Remove-Item -Force
     $upZip = Join-Path $Dist "GirlCafeGun-$ver-update.zip"
     $fullZip = Join-Path $Dist "GirlCafeGun-$ver-full.zip"
-    Push-Location $upDir;   Run $SevenZip @("a", "-tzip", "-mx0", "-bso0", "-bsp0", $upZip, "*"); Pop-Location
-    $fa = @("a", "-tzip", "-mx0", "-bso0", "-bsp0")
+    Push-Location $upDir;   Run $SevenZip @("a", "-tzip", "-mem=AES256", "-p$Password", "-mx0", "-bso0", "-bsp0", $upZip, "*"); Pop-Location
+    $fa = @("a", "-tzip", "-mem=AES256", "-p$Password", "-mx0", "-bso0", "-bsp0")
     if ($SplitSize) { $fa += "-v$SplitSize" }
     Push-Location $fullDir; Run $SevenZip ($fa + @($fullZip, "*")); Pop-Location
 
@@ -238,8 +242,8 @@ NOTES
         $bad = $names | Where-Object { $_ -match '\.(keystore|jks|cs|csproj|sln|pdb|py|c|java|log|json|db)$|\.git|\.mcp|/|\\' }
         if ($bad) { throw "forbidden entry: $($bad -join ', ')" }
     }
-    Run $SevenZip @("t", "-bso0", "-bsp0", $(if ($SplitSize) { "$fullZip.001" } else { $fullZip }))
-    Run $SevenZip @("t", "-bso0", "-bsp0", $upZip)
+    Run $SevenZip @("t", "-p$Password", "-bso0", "-bsp0", $(if ($SplitSize) { "$fullZip.001" } else { $fullZip }))
+    Run $SevenZip @("t", "-p$Password", "-bso0", "-bsp0", $upZip)
     Write-Host "archive test OK"
 
     Step "checksums + result"
