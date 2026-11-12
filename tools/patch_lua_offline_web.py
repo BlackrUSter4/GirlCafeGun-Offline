@@ -10,8 +10,9 @@ The OBB is 4+ GB, so the fix goes into lua.u (3 MB, already an override in files
 
 What it does (docs/07-ONLINE-RESOURCES.md):
   1. Lib.lua: adds OfflineWebUrl(url) and OfflineErrorHtml().
-     OfflineWebUrl maps the two dead page addresses to the local server (Game.Dir.GetBaseUpdateUrl() .. "notice.html"
-     and .. "web/maintenance/index.html", served by BootstrapHttpServer / WebAssets.cs). Other URLs pass unchanged.
+     OfflineWebUrl maps the two dead page addresses to the local server: scheme://host:port of
+     Game.Dir.GetBaseUpdateUrl() (on the phone that base is http://127.0.0.1:9080/10009/) + "/notice.html" and
+     "/web/maintenance/index.html", served by BootstrapHttpServer / WebAssets.cs. Other URLs pass unchanged.
   2. Every `uniwebview:Load(X)` in UI_Notice, UI_User, UI_OtherTip, UI_RikiComic becomes
      `uniwebview:Load(OfflineWebUrl(X))`.
   3. UI_ServerError (opens when the server does not answer) shows OfflineErrorHtml() through
@@ -45,7 +46,8 @@ function OfflineWebUrl(url)
 	if type(url) ~= "string" then return url end
 	local ok, base = pcall(function() return Game.Dir.GetBaseUpdateUrl() end)
 	if not ok or base == nil or base == "" then base = "http://127.0.0.1:9080/" end
-	if string.sub(base, -1) ~= "/" then base = base .. "/" end
+	-- keep scheme://host:port only: on the phone the update base is http://127.0.0.1:9080/10009/ (version code added)
+	base = (string.match(base, "^(%a[%w+.-]*://[^/]+)") or "http://127.0.0.1:9080") .. "/"
 	for _, tb in ipairs(tbOfflineWeb) do
 		if string.sub(url, 1, string.len(tb[1])) == tb[1] then
 			return base .. tb[2] .. string.sub(url, string.len(tb[1]) + 1)
@@ -96,7 +98,14 @@ def swap(data):
 
 def patch_lib(b):
     if MARK in b:
-        return b, 0
+        # a block from an earlier version of this tool: replace it when its text differs
+        nl = b"\r\n" if b"\r\n" in b else b"\n"
+        block = LIB_BLOCK.replace(b"\r\n", b"\n").replace(b"\n", nl)
+        start = b.index(nl + MARK)
+        end = b.index(b"]==]" + nl + b"end" + nl, start) + len(b"]==]" + nl + b"end" + nl)
+        if b[start:end] == block:
+            return b, 0
+        return b[:start] + block + b[end:], 1
     m = LIB_ANCHOR.search(b)
     if not m or len(LIB_ANCHOR.findall(b)) != 1:
         sys.exit("Lib.lua: LoadLocalUrl anchor not found exactly once")
