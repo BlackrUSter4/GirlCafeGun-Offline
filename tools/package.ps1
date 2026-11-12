@@ -40,7 +40,7 @@ $env:PATH = "$jdk\bin;$env:PATH"
 
 function Step($m) { Write-Host ("`n=== " + $m + "  [" + (Get-Date -Format HH:mm:ss) + "]") -ForegroundColor Cyan }
 function Run([string]$exe, [string[]]$a) {
-    & $exe @a
+    & $exe @a | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "$exe failed with exit code $LASTEXITCODE" }
 }
 function Sha256([string]$p) { (Get-FileHash -Algorithm SHA256 -LiteralPath $p).Hash.ToLower() }
@@ -230,8 +230,7 @@ NOTES
     $allow = @("CHECKSUMS.sha256", "GirlCafeGun-data.gcg", "GirlCafeGun.apk", "INSTALL.txt", "VERSION.txt")
     $targets = @(@{ z = $upZip; max = 4 }, @{ z = $(if ($SplitSize) { "$fullZip.001" } else { $fullZip }); max = 5 })
     foreach ($t in $targets) {
-        $names = (& $SevenZip l -slt $t.z | Select-String '^Path = ' | ForEach-Object { $_.Line.Substring(7) }) |
-            Where-Object { $_ -ne (Split-Path $t.z -Leaf) }
+        $names = (& $SevenZip l -slt $t.z | Select-String '^Path = ' | ForEach-Object { $_.Line.Substring(7) } | Select-Object -Skip 1)
         Write-Host ("{0}: {1}" -f (Split-Path $t.z -Leaf), ($names -join ", "))
         $extra = $names | Where-Object { $allow -notcontains $_ }
         if ($extra) { throw "unexpected file in pack: $($extra -join ', ')" }
