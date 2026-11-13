@@ -8,7 +8,7 @@ with the current tools/lua/GamepadFight.lua, so edit that file and run this agai
   usage: python -I tools/patch_lua_gamepad.py [lua.u in] [lua.u out] [versioncrc.json]
   default: assets/device_assets/overrides/lua.u (in place) + its versioncrc.json
 lua.u is swap-encrypted (see tools/patch_lua_free_purchase.py, docs/05 section 3.1); the CRC32 of the encrypted file
-goes into versioncrc.json, or the game rejects lua.u. See docs/06-CONTROLLER.md.
+goes into versioncrc.json, or the game rejects lua.u. See docs/11-CONTROLLER.md.
 """
 import json, os, re, sys, zlib
 import UnityPy

@@ -10,7 +10,7 @@ pack (OBB), and launch.
   the player package (`GirlCafeGun.apk` + `GirlCafeGun-data.gcg`, see
   [../HOW-TO-INSTALL.txt](../HOW-TO-INSTALL.txt)) or `assets\sync_phone.ps1` over adb; the root-based
   `sync_device_assets.ps1` fails silently there. Details:
-  [05-PHONE-PORT-2026-11-11.md](05-PHONE-PORT-2026-11-11.md). The Shizuku / file-manager routes are in
+  [05-PHONE-PORT.md](05-PHONE-PORT.md). The Shizuku / file-manager routes are in
   **[04-NO-ROOT.md](04-NO-ROOT.md)**.
 - **No network needed — airplane mode is fine.** Everything the game does stays on `127.0.0.1`
   (nothing leaves the device). The client's offline-blocking "check your network" gate is patched out,

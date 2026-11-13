@@ -1,5 +1,5 @@
 -- ============================================================
--- GamepadFight: Bluetooth/USB gamepad in shooting stages (offline build, gcg2#18, docs/06-CONTROLLER.md)
+-- GamepadFight: Bluetooth/USB gamepad in shooting stages (offline build, gcg2#18, docs/11-CONTROLLER.md)
 -- Reads the controller through Unity's legacy Input (Android InputDevice events) and drives the same C# calls
 -- as the game's own developer keyboard handler Game.Keyboard.UpdateInput (stripped from release):
 --   move  -> Game.FightJoystick.SetMoveOffset(dir)           fire -> fightCamera:OnFight(v) / OnFightStop()

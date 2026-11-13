@@ -1,4 +1,4 @@
-# 06 — Gamepad support (gcg2#18, started 2026-11-11)
+# 11 — Gamepad support (gcg2#18, started 2026-11-11)
 
 Goal: play the shooting stages with a Bluetooth gamepad connected to the phone. The game reads the controller
 itself. No touch overlay, no key-to-touch mapper.

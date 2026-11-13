@@ -18,7 +18,7 @@ For preservation and study only. **Scan anything you download before running it.
 > [HOW-TO-INSTALL.txt](HOW-TO-INSTALL.txt). Server and GM text is in English. Also new: free store
 > packs offline, working GM money buttons, all-or-nothing gacha, event achievements, a Bluetooth
 > gamepad layer and local copies of the web pages the client used to load online. The list is in
-> [docs/05-PHONE-PORT-2026-11-11.md](docs/05-PHONE-PORT-2026-11-11.md).
+> [docs/05-PHONE-PORT.md](docs/05-PHONE-PORT.md).
 
 ---
 
@@ -81,13 +81,13 @@ GirlCafeGun-Offline/
 │   ├─ 02-RUN-SERVER.md      run the server standalone (dev)
 │   ├─ 03-BUILD-APK.md       rebuild the offline APK from source
 │   ├─ 04-NO-ROOT.md         install the bundles/assets without root (Shizuku etc.)
-│   ├─ 05-UNCENSOR.md        the love.u uncensor patch (restores Live2D interactions)
-│   ├─ 06-CONNECTION-FIX.md  why "Connection error" happened and the static envir.json fix
-│   ├─ 04-MISSING-ASSETS.md  assets the game lists but the bundle set lacks (audit)
-│   ├─ 05-OLD-VERSION-ASSETS.md  assets recovered from other xapk versions
-│   ├─ 05-PHONE-PORT-2026-11-11.md  real-phone fixes, translation, player package, tools
-│   ├─ 06-CONTROLLER.md      Bluetooth gamepad in shooting stages
-│   └─ 07-ONLINE-RESOURCES.md  online addresses the client still asks for: local fixes + ledger
+│   ├─ 05-PHONE-PORT.md      real-phone fixes, translation, player package, tools
+│   ├─ 06-MISSING-ASSETS.md  assets the game lists but the bundle set lacks (audit)
+│   ├─ 07-OLD-VERSION-ASSETS.md  assets recovered from other xapk versions
+│   ├─ 08-ONLINE-RESOURCES.md  online addresses the client still asks for: local fixes + ledger
+│   ├─ 09-UNCENSOR.md        the love.u uncensor patch (restores Live2D interactions)
+│   ├─ 10-CONNECTION-FIX.md  why "Connection error" happened and the static envir.json fix
+│   └─ 11-CONTROLLER.md      Bluetooth gamepad in shooting stages
 ├─ assets/                 game files — NOT committed (see .gitignore); delivered via the pack
 │   ├─ sync_device_assets.ps1   pushes the content bundles + merged table to the device (root)
 │   ├─ sync_phone.ps1           the same for a phone without root, over adb
@@ -128,16 +128,16 @@ Re-signing uses the included debug key, so you can update an install in place wi
 | Area | Status |
 |------|--------|
 | Offline play / airplane mode | ✅ Works (fresh account, tutorial, story, gacha, shop) |
-| "Connection error" / calls official server | ✅ Fixed — serverlist points local statically ([docs/06-CONNECTION-FIX.md](docs/06-CONNECTION-FIX.md)) + airplane gate patched |
+| "Connection error" / calls official server | ✅ Fixed — serverlist points local statically ([docs/10-CONNECTION-FIX.md](docs/10-CONNECTION-FIX.md)) + airplane gate patched |
 | Missing voice / scenes / art | ✅ Fixed — the full bundle set the game references now ships |
-| Censored Live2D touch/flirting interactions | ✅ Restored by default (love.u) — [docs/05-UNCENSOR.md](docs/05-UNCENSOR.md); `-NoUncensor` to opt out |
+| Censored Live2D touch/flirting interactions | ✅ Restored by default (love.u) — [docs/09-UNCENSOR.md](docs/09-UNCENSOR.md); `-NoUncensor` to opt out |
 | Chinese title buttons (新账号 / 输入账号) | ⚠️ Known — baked into the EN login-UI prefab; not yet translated |
 | Background telemetry calls | ⚠️ Harmless — fail silently offline; don't block play |
 | Non-rooted phones | ✅ Works — in-game data installer ([HOW-TO-INSTALL.txt](HOW-TO-INSTALL.txt)) or `assets\sync_phone.ps1` over adb; Shizuku / file manager route in [docs/04-NO-ROOT.md](docs/04-NO-ROOT.md) |
 | Real arm64 phones (Android 11+) | ✅ Fixed — heap pointer tagging is turned off before the server runtime starts |
 | Store packs / paid currency offline | ✅ Granted free; GM panel money buttons work |
-| Bluetooth gamepad in shooting stages | ✅ Works — [docs/06-CONTROLLER.md](docs/06-CONTROLLER.md) |
-| Notice / server-error web pages | ✅ Served by the embedded server — [docs/07-ONLINE-RESOURCES.md](docs/07-ONLINE-RESOURCES.md) |
+| Bluetooth gamepad in shooting stages | ✅ Works — [docs/11-CONTROLLER.md](docs/11-CONTROLLER.md) |
+| Notice / server-error web pages | ✅ Served by the embedded server — [docs/08-ONLINE-RESOURCES.md](docs/08-ONLINE-RESOURCES.md) |
 | Official online services / multiplayer | ❌ Out of scope by design |
 
 Full table + explanations: **[docs/project.html](docs/project.html)**.

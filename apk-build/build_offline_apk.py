@@ -110,7 +110,7 @@ def main():
             repl["lib/arm64-v8a/libsssjdata.so"] = data
             for so in RUNTIME_SO:
                 repl["lib/arm64-v8a/%s.so" % so] = os.path.join(a.publish, so + ".so")
-        # gamepad: raw joystick axes for the Lua controller layer (docs/06-CONTROLLER.md)
+        # gamepad: raw joystick axes for the Lua controller layer (docs/11-CONTROLLER.md)
         dataname = "assets/bin/Data/data.unity3d"
         with zipfile.ZipFile(base) as zi:
             open(os.path.join(work, "data.in"), "wb").write(zi.read(dataname))

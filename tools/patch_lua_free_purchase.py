@@ -8,7 +8,7 @@ when tbParam.Free == 1 it shows the reward window and refreshes the shop, and ne
   usage: python -I tools/patch_lua_free_purchase.py [lua.u in] [lua.u out] [versioncrc.json]
   default: assets/device_assets/overrides/lua.u (in place) + its versioncrc.json
 lua.u is swap-encrypted (Game.BundleEncrypt, seed 0x166920ED; the routine is its own inverse), CRC32 is taken over the
-encrypted bytes. Idempotent: running it twice changes nothing. See docs/05-PHONE-PORT-2026-11-11.md section 3.1.
+encrypted bytes. Idempotent: running it twice changes nothing. See docs/05-PHONE-PORT.md section 3.1.
 """
 import json, os, sys, zlib
 import UnityPy

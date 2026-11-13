@@ -4,7 +4,7 @@
 > the installer and repacks `gcg_offline_fixed.apk` into `GirlCafeGun.apk`; `python apk-build/make_data_package.py`
 > builds `GirlCafeGun-data.gcg`. `host.c` now turns off heap pointer tagging (required on real phones) and
 > keeps saves in `files/sssjsave`. When the server changes, re-run `dotnet publish` (steps below) and replace
-> the data tar **and** the 7 runtime `.so` together. See [05-PHONE-PORT-2026-11-11.md](05-PHONE-PORT-2026-11-11.md).
+> the data tar **and** the 7 runtime `.so` together. See [05-PHONE-PORT.md](05-PHONE-PORT.md).
 
 How the self-contained `gcg_offline.apk` is made, in case you change the server and want to re-bake it.
 The build sources are in `apk-build/`.

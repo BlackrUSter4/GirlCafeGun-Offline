@@ -9,7 +9,7 @@ This script appends 'gcgpad_a1' .. 'gcgpad_a28' (type 2 = joystick axis, all joy
 Buttons need nothing: Input.GetKey(KeyCode.JoystickButton0..19) works without an InputManager entry.
 
   usage: python -I apk-build/patch_inputmanager.py <data.unity3d in> <data.unity3d out>
-Idempotent. See docs/06-CONTROLLER.md.
+Idempotent. See docs/11-CONTROLLER.md.
 """
 import sys
 import UnityPy

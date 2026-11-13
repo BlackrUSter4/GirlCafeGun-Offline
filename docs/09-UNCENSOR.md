@@ -1,4 +1,4 @@
-# 05 — Uncensor patch (restoring the Live2D interactions)
+# 09 — Uncensor patch (restoring the Live2D interactions)
 
 The global (EN) release of Girl Cafe Gun removed some of the Live2D **touch / flirting
 interactions** that the earlier Korean and Chinese builds had. This build restores them. The

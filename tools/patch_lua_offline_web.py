@@ -8,7 +8,7 @@ Why: envir.json in the OBB (environment "en") still names Bilibili pages for the
 Both answer with an Alibaba OSS "NoSuchKey" XML page, and the game shows that page in its Notice window.
 The OBB is 4+ GB, so the fix goes into lua.u (3 MB, already an override in files/).
 
-What it does (docs/07-ONLINE-RESOURCES.md):
+What it does (docs/08-ONLINE-RESOURCES.md):
   1. Lib.lua: adds OfflineWebUrl(url) and OfflineErrorHtml().
      OfflineWebUrl maps the two dead page addresses to the local server: scheme://host:port of
      Game.Dir.GetBaseUpdateUrl() (on the phone that base is http://127.0.0.1:9080/10009/) + "/notice.html" and
@@ -21,7 +21,7 @@ What it does (docs/07-ONLINE-RESOURCES.md):
   usage: python -I tools/patch_lua_offline_web.py [lua.u in] [lua.u out] [versioncrc.json]
   default: assets/device_assets/overrides/lua.u (in place) + its versioncrc.json
 lua.u is swap-encrypted (Game.BundleEncrypt, seed 0x166920ED; the routine is its own inverse), CRC32 is taken over the
-encrypted bytes. Idempotent: running it twice changes nothing. See docs/05-PHONE-PORT-2026-11-11.md section 3.1.
+encrypted bytes. Idempotent: running it twice changes nothing. See docs/05-PHONE-PORT.md section 3.1.
 """
 import json, os, re, sys, zlib
 import UnityPy

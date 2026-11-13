@@ -1,4 +1,4 @@
-# 05 - Assets recovered from other packages
+# 07 - Assets recovered from other packages
 
 Date: 2026-11-12. Source: the xapk files in `OtherAPKs/` (EN 1.0.2, EN 1.0.6, EN 1.0.7, JP 1.1.14).
 Compared by entry name, size and CRC against `assets/obb/` and `assets/Bundles/`. The bundles were not opened.
@@ -9,7 +9,7 @@ Compared by entry name, size and CRC against `assets/obb/` and `assets/Bundles/`
 - `update/`: `cafe1__tex.u`, `cafe2_.u`, `cafe3_.u`, `cafe4_.u`, `cb005__tex.u`, `cb2_.u`, `cb2__l2d_6.u`,
   `cbt5__l2d_12.u`, `l2d1__l2d_3.u`, `l2d2__l2d_4.u`, `l2d3__l2d_5.u`, `ob_.u`, `qlzl2d__l2d_7.u`
 
-Five of them are on the missing list in `04-MISSING-ASSETS.md` (all in the not-required group):
+Five of them are on the missing list in `06-MISSING-ASSETS.md` (all in the not-required group):
 both theme songs, `update/cafe1__tex.u`, `update/cafe2_.u`, `update/cb2_.u`.
 None of the 18 story-voice bundles is in any package.
 

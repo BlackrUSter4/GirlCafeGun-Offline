@@ -1,4 +1,4 @@
-# 04 - Missing assets
+# 06 - Missing assets
 
 Audit date: 2026-11-11. Checked `assets/obb/` and `assets/Bundles/` against `Girl+Cafe+Gun_1.0.9_APKPure.xapk`
 and against the bundle list in `assets/device_assets/version.data` (the OBB's own `version.data` gives the same gaps).

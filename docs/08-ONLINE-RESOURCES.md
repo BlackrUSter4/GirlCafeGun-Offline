@@ -1,4 +1,4 @@
-# 07 — Online resources: sweep, local fixes, ledger (2026-11-12)
+# 08 — Online resources: sweep, local fixes, ledger (2026-11-12)
 
 The offline build must not need the publisher's servers. This file lists every online address the
 English client (EN v1.0.9, environment `en`) can still ask for, what is now served locally, and what
@@ -116,7 +116,7 @@ in the game) and the server-error window.
 | What | Original | Local |
 |---|---|---|
 | Server list, state, update check | `https://l1x-prod-{us,eu,sgp}-serverlist-sssj.bilibiligame.net` (`envir.json.stock`) | `http://127.0.0.1:9080` (`/serverlist`, `/getstate`, `/checkupdate`, `/uploadclientip`) |
-| Asset updates | `https://cdn-cafe2.xoyo.games/dev_en` (DNS dead, nothing archived) | none needed; missing bundles: `docs/04-MISSING-ASSETS.md` |
+| Asset updates | `https://cdn-cafe2.xoyo.games/dev_en` (DNS dead, nothing archived) | none needed; missing bundles: `docs/06-MISSING-ASSETS.md` |
 | Notice data (`NoticeCommon.lua:16-21`) | `{updateUrl}notice.txt` (default `http://gcg2notice.ks3-cn-beijing.ksyun.com/notice.txt`) | `GET /notice.txt` |
 | Bilibili SDK config | `/gapi/client/config` | answered by the local server |
 

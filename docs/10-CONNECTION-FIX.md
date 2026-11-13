@@ -1,4 +1,4 @@
-# 06 — The "Connection error" fix (always talk to the local server)
+# 10 — The "Connection error" fix (always talk to the local server)
 
 Some offline builds intermittently show **"Connection error. Please check if WiFi is turned on."** on
 launch, or get stuck on the splash. This build fixes that at the source. Here's what was happening and
