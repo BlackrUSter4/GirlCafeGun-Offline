@@ -386,6 +386,13 @@ public sealed class ShopFeature : IGameFeature
             return Task.CompletedTask;
         }
 
+        // gcg2#16: every entry can build a shelf and save; a client never sends more than a few.
+        if (requests.Count > 100)
+        {
+            Log.Warn($"[session {session.Id}] Shop_ReqBuyFurList: {requests.Count} entries, more than 100, ignored");
+            return Task.CompletedTask;
+        }
+
         var reply = new JsonArray();
         var merged = new BuyOutcome();
         int ok = 0;
@@ -541,7 +548,13 @@ public sealed class ShopFeature : IGameFeature
         // 价格：档位与折扣都必须与客户端算的一致，否则「显示 20 实扣 80」
         int priceIdx = PriceIndex(goods, player, shopId, goodsId);
         int unit = goods.UnitPrice(priceIdx, entry.Discount);
-        int total = unit * buyNum;
+        long totalWide = (long)unit * buyNum;
+        if (totalWide > int.MaxValue)
+        {
+            tipKey = TipNotEnoughMoney;   // gcg2: an int overflow here made a negative total, i.e. a free purchase
+            return null;
+        }
+        int total = (int)totalWide;
 
         long grantCount = (long)goods.GoodsNum * buyNum;
         if (grantCount <= 0 || grantCount > int.MaxValue

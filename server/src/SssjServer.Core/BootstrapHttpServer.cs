@@ -186,8 +186,17 @@ public sealed class BootstrapHttpServer
             case "/notice.txt":
                 return (200, "OK", Json(Notice()), JsonContentType);
 
+            // /notice.html is the address the client asks for (OfflineWebUrl in Lib.lua, written by
+            // tools/patch_lua_offline_web.py; before that, emulator-era patch_apk.py). Keep this path:
+            // a lua.u that is newer than the APK must still get a page. The page itself is Web/notice/index.html.
             case "/notice.html":
+                if (WebAssets.TryGet("/web/notice/index.html", out var noticePage, out var noticeType))
+                    return (200, "OK", noticePage, noticeType);
                 return (200, "OK", Encoding.UTF8.GetBytes(NoticeHtml()), "text/html; charset=utf-8");
+
+            // WebViews ask for this on every page; answer quietly instead of logging a 404.
+            case "/favicon.ico":
+                return (204, "No Content", Array.Empty<byte>(), "image/x-icon");
 
             case "/gapi/client/config":
             {
@@ -207,6 +216,10 @@ public sealed class BootstrapHttpServer
 
             default:
             {
+                // Local copies of the pages the client used to load from the publisher's web servers.
+                if (WebAssets.TryGet(req.Path, out var webBody, out var webType))
+                    return (200, "OK", webBody, webType);
+
                 Log.Warn($"[http] 未处理 {req.Method} {req.Path}");
                 return (404, "Not Found", Json(new JsonObject()), JsonContentType);
             }
@@ -244,8 +257,8 @@ public sealed class BootstrapHttpServer
             ["bannerLoopTime"] = 5,
             ["banners"] = new JsonArray(),
             ["notices"] = new JsonArray(
-                Item(1, "本地服务端",
-                     "制作人：SteveS，勿擅自转发\n\n这是 sssj-new 本地服务端下发的公告。\n登录 / 关卡 / 背包 / 签到等功能已可用。")),
+                Item(1, "Local Server",
+                     "Producer: SteveS. Do not redistribute.\n\nThis notice comes from the sssj-new local server.\nLogin / stages / inventory / check-in and more are now available.")),
             ["activity"] = new JsonArray(),
             ["news"] = new JsonArray(),
             ["LoginNotice"] = new JsonArray(),
@@ -255,9 +268,9 @@ public sealed class BootstrapHttpServer
     /// <summary>主界面公告网页（UniWebView 只负责展示，内容随意）。</summary>
     private static string NoticeHtml() => """
         <!DOCTYPE html>
-        <html lang="zh-CN"><head><meta charset="utf-8">
+        <html lang="en"><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>公告</title>
+        <title>Notice</title>
         <style>
           body{margin:0;padding:24px;background:#f4f6f9;color:#2b3038;
                font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.8}
@@ -266,14 +279,14 @@ public sealed class BootstrapHttpServer
           code{background:#e6ebf2;padding:1px 5px;border-radius:3px;font-size:13px}
           .tip{color:#7a8494;font-size:13px;margin-top:24px}
         </style></head><body>
-        <h1>sssj-new 本地服务端</h1>
-        <p><strong>制作人：SteveS，勿擅自转发</strong></p>
-        <p>这是本地服务端提供的公告页（<code>GET /notice.html</code>）。</p>
-        <h2>已可用</h2>
-        <p>登录 · 主线关卡与结算 · 编队 · 背包与分解 · 每日签到 · 任务成就领奖 · 咖啡馆数据 · 手机短信</p>
-        <h2>开发中</h2>
-        <p>商店 · 抽卡 · 邮件 · 武器与零件 · 少女养成</p>
-        <p class="tip">数据源见 <code>server/src/SssjServer.Core/BootstrapHttpServer.cs</code>。</p>
+        <h1>sssj-new Local Server</h1>
+        <p><strong>Producer: SteveS. Do not redistribute.</strong></p>
+        <p>This is the notice page served by the local server (<code>GET /notice.html</code>).</p>
+        <h2>Available</h2>
+        <p>Login · Main stages and results · Formation · Inventory and dismantling · Daily check-in · Mission and achievement rewards · Cafe data · Phone messages</p>
+        <h2>In development</h2>
+        <p>Shop · Gacha · Mail · Weapons and parts · Girl training</p>
+        <p class="tip">Data source: <code>server/src/SssjServer.Core/BootstrapHttpServer.cs</code>.</p>
         </body></html>
         """;
 

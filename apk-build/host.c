@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <malloc.h>
 #include <android/log.h>
 
 #define TAG "sssjhost"
@@ -22,6 +23,10 @@ int main(int argc, char** argv) {
     chdir(SRVDIR);
     freopen(SRVDIR "/srv.log", "w", stdout);
     freopen(SRVDIR "/srv.log", "a", stderr);
+    // Real arm64 phones (Android 11+) tag heap pointers (TBI). The Mono runtime shifts pointers and
+    // crashes in monovm_initialize with a tagged one (seen on a Galaxy S24+, Android 17). Turn tagging
+    // off before the runtime allocates anything. Emulators have no TBI, so they never hit this.
+    LOGI("heap tagging off rc=%d", mallopt(M_BIONIC_SET_HEAP_TAGGING_LEVEL, M_HEAP_TAGGING_LEVEL_NONE));
     setenv("DOTNET_EnableWriteXorExecute", "0", 1);
     setenv("HOME", SRVDIR, 1);
     setenv("DOTNET_gcServer", "0", 1);
@@ -39,7 +44,8 @@ int main(int argc, char** argv) {
     run_fn run = (run_fn)dlsym(fxr, "hostfxr_run_app");
     if (!init || !run) { LOGE("hostfxr symbols missing"); return 3; }
     const char* a[] = { SRVDIR "/SssjServer.App.dll", "--setting-dir", SRVDIR "/setting",
-        "--data-dir", SRVDIR "/data", "--gate-host", "127.0.0.1", "--http-port", "9080",
+        // Saves live OUTSIDE SRVDIR: the shim runs `rm -rf SRVDIR` and re-extracts on every launch.
+        "--data-dir", "/data/data/" PKG "/files/sssjsave", "--gate-host", "127.0.0.1", "--http-port", "9080",
         "--gate-port", "9600", "--gm-accounts", "none", "--skip-tutorial", "false",
         "--grant-starter", "true", "--all-events-open", "true" };
     // host_path/dotnet_root must point at the server dir (filesDir) where the DLLs live — otherwise

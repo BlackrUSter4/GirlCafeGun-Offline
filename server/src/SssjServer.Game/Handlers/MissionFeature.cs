@@ -300,7 +300,11 @@ public sealed class MissionFeature : IGameFeature, IGamePulseFeature
         // 直到本族任意一条上行命令触发 SyncAndPush 才补上。
         ctx.OnPlayerLogin((session, player) =>
         {
+            // Login-day counter (AchieveType 43) for the eight-day / four-day login pages.
+            bool newDay = EventMissionProgress.RecordLoginDay(player, DateTimeOffset.UtcNow);
             var changed = SyncTaskValues(player);
+            if (newDay && changed.Count == 0)
+                _ctx.Store.Save(player);
             if (changed.Count == 0)
                 return;
             _ctx.Store.Save(player);

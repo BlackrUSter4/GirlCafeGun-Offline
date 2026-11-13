@@ -21,8 +21,8 @@ internal sealed class GachaRequestLimits
 
     // PlayerLogic.CheckMaxCard/Weapon reject count + draws >= configured limit.
     internal bool HasRoom(Player player, uint genre, int draws)
-        => draws > 0 && _limits.TryGetValue(genre, out int limit)
-            && (long)player.Items.Count(i => i.Genre == genre && i.Count > 0) + draws < limit;
+        => draws > 0 && (!_limits.TryGetValue(genre, out int limit)   // gcg2#17: no configured limit = no limit
+            || (long)player.Items.Count(i => i.Genre == genre && i.Count > 0) + draws < limit);
 
     internal static bool TryInteger(JsonNode? node, out int value)
     {

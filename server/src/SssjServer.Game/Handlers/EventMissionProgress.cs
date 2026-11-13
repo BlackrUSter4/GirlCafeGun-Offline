@@ -40,6 +40,22 @@ internal static class EventMissionProgress
         counters[key] = (int)Math.Min(int.MaxValue, (long)Counter(player, key) + amount);
     }
 
+    private const string LoginDayKey = "loginDay";
+
+    /// <summary>
+    /// Counts one login day (AchieveType 43, counter "43") per server day that starts at 04:00 UTC,
+    /// the same day line as SignUpFeature.SignDay. Safe to call many times a day.
+    /// </summary>
+    internal static bool RecordLoginDay(Player player, DateTimeOffset now)
+    {
+        var d = now.AddSeconds(-SignUpFeature.DayResetOffsetSeconds).UtcDateTime;
+        int today = d.Year * 10000 + d.Month * 100 + d.Day;
+        if (player.Extra.GetValueOrDefault(LoginDayKey)?.GetValue<int>() == today) return false;
+        player.Extra[LoginDayKey] = today;
+        Bump(player, "43");
+        return true;
+    }
+
     internal static void Reset(Player player, string key) => Counters(player).Remove(key);
 
     internal static void Raise(Player player, string key, int value)
@@ -155,7 +171,8 @@ internal static class EventMissionProgress
         191 => Counter(player, "191"),
         112 or 115 when c.Count >= 1 => Counter(player, $"{type}:{c[0]}"),
         252 when c.Count >= 2 => Counter(player, $"252:{c[1]}"),
-        43 when c.Count >= 2 => Counter(player, $"43:{c[1]}"),
+        // AchieveType 43 [count, paid sign activity]: the paid counter only when that activity has one, else login days.
+        43 when c.Count >= 2 && Counter(player, $"43:{c[1]}") > 0 => Counter(player, $"43:{c[1]}"),
         43 => Counter(player, "43"),
 
         // Plain totals, bumped by the feature that names the command or combat stat.

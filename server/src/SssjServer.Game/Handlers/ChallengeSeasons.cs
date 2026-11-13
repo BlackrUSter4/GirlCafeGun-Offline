@@ -151,8 +151,8 @@ internal sealed class ChallengeSeasons
                 var mail = new MailEntry
                 {
                     Id = MailFeature.NextId(mails), RecvTime = now, ExpiryTime = now + MailFeature.MailOutSeconds,
-                    Title = "本地数据演习排名奖励", Sender = "战场处理者",
-                    Content = $"本轮本地演习共{ranking.Count}位指挥官保留成绩；您的积分为{score}，排名第{own.Rank}，对应{tier.Percent}%档奖励。",
+                    Title = "Local Data Drill Ranking Reward", Sender = "Battlefield Handler",
+                    Content = $"{ranking.Count} commanders have records in this local drill. Your score is {score}, rank {own.Rank}, which earns the {tier.Percent}% tier reward.",
                     Items = tier.Items.Select(t => t.ToArray()).ToList(),
                 };
                 mails.Add(mail);

@@ -136,7 +136,9 @@ public sealed class ActivityAchieveFeature : IGameFeature
     private Task ClaimLocked(ClientSession session, Player player, int activityId, int achieveId)
     {
         // ① 该成就必须属于这个活动（防越活动领奖）
-        if (!_activities.Contains(activityId, achieveId))
+        // Pages whose config file is not in ActivityAchieveTable.AchievementFiles still claim normally:
+        // for them only the AchievementOther entry and its progress gate apply.
+        if (_activities.Knows(activityId) && !_activities.Contains(activityId, achieveId))
         {
             Fail(session, ErrNotExist);
             Log.Warn($"[session {session.Id}] 活动成就领奖：成就 {achieveId} 不属于活动 {activityId}" +
@@ -162,7 +164,7 @@ public sealed class ActivityAchieveFeature : IGameFeature
         }
 
         int taskValue = player.GetTask(ActivityAchieveTable.AchieveGroup, achieveId);
-        int progress = MissionFeature.ProgressOf(taskValue);
+        int progress = Math.Max(MissionFeature.ProgressOf(taskValue), MissionFeature.DerivedProgress(player, entry));
         int claimed = MissionFeature.ClaimedOf(taskValue);
 
         // ③ 领过就不能再领（bit0）

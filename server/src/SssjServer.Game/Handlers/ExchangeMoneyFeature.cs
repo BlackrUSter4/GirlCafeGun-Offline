@@ -52,7 +52,7 @@ public sealed class ExchangeMoneyFeature : IGameFeature
     private static void ResetDay(Player player, List<KeyValuePair<uint, int>> changes)
     {
         int today = CafeFeature.CafeDayIndex(DateTimeOffset.UtcNow);
-        if (player.Extra.GetValueOrDefault(DayKey)?.GetValue<int>() == today) return;
+        if (player.Extra.GetValueOrDefault(DayKey) is JsonValue stored && stored.TryGetValue<int>(out int storedDay) && storedDay == today) return;   // gcg2#16: a wrong stored type no longer throws
         player.Extra[DayKey] = today;
         EventKit.Write(player, changes, Group, VigourTimes, 0);
         EventKit.Write(player, changes, Group, GoldTimes, 0);
@@ -61,7 +61,7 @@ public sealed class ExchangeMoneyFeature : IGameFeature
     private Task OnExchange(ClientSession session, string function, JsonNode? param)
     {
         if (session.Tag is not Player player) return Task.CompletedTask;
-        int type = EventKit.Number(param, "nType"), count = Math.Max(1, EventKit.Number(param, "nCount"));
+        int type = EventKit.Number(param, "nType"), count = Math.Clamp(EventKit.Number(param, "nCount"), 1, 99);
         lock (player)
         {
             var changes = new List<KeyValuePair<uint, int>>();
@@ -74,7 +74,7 @@ public sealed class ExchangeMoneyFeature : IGameFeature
                 TypeRikiCoin => BuyRikiCoin(session, player, count),
                 _ => ErrNoTimes,
             };
-            _ctx.Store.Save(player);
+            if (error == 0 || changes.Count > 0) _ctx.Store.Save(player);   // gcg2#16: a refused purchase changed nothing
             if (changes.Count > 0) GameNotify.PushTaskValues(session, changes);
             if (type == TypeRikiCoin && error == 0)
                 _ctx.LuaCalls.CallClientFunction(session, "ServerPhoneMsg", new JsonObject { ["nCount"] = count });

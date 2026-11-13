@@ -464,7 +464,7 @@ public sealed class ServerConsoleFeature : IGameFeature
 
                 var mailFeature = new MailFeature();
                 mailFeature.SendMail(session, player,
-                                     parts[1], "GM", "这是一封 GM 邮件。", attach);
+                                     parts[1], "GM", "This is a GM mail.", attach);
                 Save(player);
                 Log.Info($"[gmsrv] 已发邮件《{parts[1]}》，附件 {attach.Count} 项");
                 return true;

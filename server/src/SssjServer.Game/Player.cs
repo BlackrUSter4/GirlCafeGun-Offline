@@ -127,7 +127,8 @@ public sealed class Player
     public void AddMoney(int id, int amount)
     {
         Money.TryGetValue(id, out var cur);
-        Money[id] = cur + amount;
+        // gcg2: clamp to 0..int.MaxValue; a plain int add wrapped to a negative balance
+        Money[id] = (int)Math.Clamp((long)cur + amount, 0L, int.MaxValue);
         Handlers.EventMissionProgress.MoneyChanged(this, id, amount);
     }
 

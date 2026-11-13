@@ -219,7 +219,7 @@ public sealed class ChatFeature : IGameFeature
     internal void OnLogin(ClientSession session, Player player)
     {
         session.Push(GamePf.NoticeChattingMsg,
-                     BuildSystemNotice($"欢迎回来，{Display(player.Name)}。当前世界频道 {player.ChatChannelId}。"));
+                     BuildSystemNotice($"Welcome back, {Display(player.Name)}. Current world channel: {player.ChatChannelId}."));
 
         int replayed = ReplayWorldHistory(session, player.ChatChannelId);
         Log.Info($"[session {session.Id}] 聊天登录推送：系统欢迎语 1 条（pf 1012 type=2）"
@@ -302,7 +302,7 @@ public sealed class ChatFeature : IGameFeature
                 if (delivered == 0)
                 {
                     session.Push(GamePf.NoticeChattingMsg,
-                                 BuildSystemNotice($"「{Display(req.TargetName)}」当前不在线，消息未送达。"));
+                                 BuildSystemNotice($"\"{Display(req.TargetName)}\" is offline. Message not delivered."));
                 }
                 break;
             }
@@ -598,7 +598,7 @@ public sealed class ChatFeature : IGameFeature
         if (replayed == 0)
         {
             session.Push(GamePf.NoticeChattingMsg,
-                         BuildSystemNotice($"已进入 {channel} 号频道。"));
+                         BuildSystemNotice($"Joined channel {channel}."));
         }
 
         Log.Info($"[session {session.Id}] Chat_{(cmd == RandomChangeChannelCmd ? "RandomChangeChannel(141)" : "ChangeChannel(140)")}"
@@ -731,7 +731,7 @@ public sealed class ChatFeature : IGameFeature
     private static uint NowSeconds() => (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     /// <summary>空名字会被渲染成空白，给一个可见的兜底（<c>sender_name</c> 是 required，不能是 null）。</summary>
-    private static string Display(string? name) => string.IsNullOrEmpty(name) ? "无名" : name;
+    private static string Display(string? name) => string.IsNullOrEmpty(name) ? "Nameless" : name;
 
     /// <summary>日志用的正文预览（截断，避免长文本刷屏）。</summary>
     private static string Preview(string message)

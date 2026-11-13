@@ -138,9 +138,9 @@ public sealed class RewardGrantResult
     /// <summary>日志用的一行摘要。</summary>
     public string Describe()
         => _rewards.Count == 0
-            ? "（无）"
+            ? "(none)"
             : string.Join(", ", _rewards.Select(r =>
-                $"{r.Name}x{r.Count}{(r.IsMoney ? $"→货币{r.MoneyId}" : $"#{r.ItemGuid}")}[flag{r.Flag}]"));
+                $"{r.Name}x{r.Count}{(r.IsMoney ? $"→currency {r.MoneyId}" : $"#{r.ItemGuid}")}[flag{r.Flag}]"));
 
     internal void AddReward(GrantedReward reward) => _rewards.Add(reward);
 
@@ -487,7 +487,7 @@ public sealed class RewardService
         foreach (var e in fixedItems)
         {
             // ★ 礼包买了 N 份 ⇒ 箱内每项也乘 N
-            int n = e.Gdpl[4] * Math.Max(1, count);
+            int n = (int)Math.Min((long)e.Gdpl[4] * Math.Max(1, count), int.MaxValue);   // gcg2#16: no int wrap
             GrantOne(player, result, (uint)e.Gdpl[0], (uint)e.Gdpl[1], (uint)e.Gdpl[2], (uint)e.Gdpl[3],
                      n, flag, cardLevel: null, depth: depth + 1);
         }
@@ -619,7 +619,7 @@ public sealed class RewardService
         if (stack is null)
             stack = player.AddItem(g, d, p, l, (uint)count);
         else
-            stack.Count += (uint)count;
+            stack.Count = (uint)Math.Min((long)stack.Count + count, uint.MaxValue);   // gcg2#16: no uint wrap
 
         result.NoteItem(stack);
         result.AddReward(new GrantedReward(g, d, p, l, (uint)count, flag, 0, stack.Guid, name));
